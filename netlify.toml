@@ -1,0 +1,3 @@
+[build]
+  publish = "netlify-deploy"
+  functions = "netlify-deploy/netlify/functions"
