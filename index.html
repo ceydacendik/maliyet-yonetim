@@ -75,7 +75,7 @@
   <header class="mb-6 flex items-start justify-between gap-4 flex-wrap">
     <div>
       <h1 class="text-2xl font-bold text-slate-900">Maliyet & Fiyat Yönetimi</h1>
-      <p class="text-sm text-slate-500 mt-1">İthal Ürünler · Prototip v1.2</p>
+      <p class="text-sm text-slate-500 mt-1">İthal Ürünler · Cey v1.2</p>
     </div>
     <div class="flex gap-3 items-center bg-white rounded-xl px-4 py-3 shadow-sm border border-slate-200">
       <div class="text-right">
@@ -101,12 +101,14 @@
   </header>
 
   <nav class="flex gap-1 mb-4 bg-white p-1 rounded-xl shadow-sm border border-slate-200 w-fit">
-    <button data-tab="products" class="tab-btn pill-btn tab-active">Ürünler</button>
+    <button data-tab="products" class="tab-btn pill-btn tab-active">🏭 Ürünler</button>
     <button data-tab="sales" class="tab-btn pill-btn tab-inactive">📦 Satış Takibi</button>
+    <button data-tab="service" class="tab-btn pill-btn tab-inactive">🔧 Teknik Servis</button>
     <button data-tab="analytics" class="tab-btn pill-btn tab-inactive">📊 Analitik</button>
-    <button data-tab="categories" class="tab-btn pill-btn tab-inactive">Kategoriler & Vergiler</button>
-    <button data-tab="settings" class="tab-btn pill-btn tab-inactive">Ayarlar</button>
-    <button data-tab="history" class="tab-btn pill-btn tab-inactive">Fiyat Geçmişi</button>
+    <button data-tab="categories" class="tab-btn pill-btn tab-inactive">🗂️ Kategoriler & Vergiler</button>
+    <button data-tab="settings" class="tab-btn pill-btn tab-inactive">⚙️ Ayarlar</button>
+    <button data-tab="history" class="tab-btn pill-btn tab-inactive">📜 Fiyat Geçmişi</button>
+    <button data-tab="export" class="tab-btn pill-btn tab-inactive">🌍 Yurtdışı Fiyatları</button>
   </nav>
 
   <section id="tab-products" class="tab-content">
@@ -508,6 +510,133 @@
   </section>
   <!-- ===== / SATIŞ TAKİBİ SEKMESİ ===== -->
 
+  <!-- ===== TEKNİK SERVİS SEKMESİ ===== -->
+  <section id="tab-service" class="tab-content hidden">
+
+    <!-- Özet kartlar -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="serviceSummaryCards"></div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+
+      <!-- Servis kaydı girişi -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="font-bold text-slate-900 mb-4" id="serviceFormTitle">Yeni Servis Kaydı</h3>
+        <div class="space-y-3">
+          <div>
+            <label class="text-xs font-medium text-slate-600">Ürün</label>
+            <select id="sv_product" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"></select>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600">Tarih</label>
+            <input type="date" id="sv_date" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600">Arıza Tipi</label>
+            <select id="sv_fault_type" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+              <option value="motor">Motor</option>
+              <option value="bıçak">Bıçak / Kesici</option>
+              <option value="sarj">Şarj / Batarya</option>
+              <option value="elektronik">Elektronik / Kart</option>
+              <option value="kablo">Kablo / Bağlantı</option>
+              <option value="govde">Gövde / Plastik</option>
+              <option value="diger">Diğer</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600">Değiştirilen Parça</label>
+            <input type="text" id="sv_part" placeholder="örn. Motor fırçası" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-xs font-medium text-slate-600">Parça Maliyeti (TL)</label>
+              <input type="number" id="sv_part_cost" min="0" placeholder="0" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600">İşçilik (TL)</label>
+              <input type="number" id="sv_labor_cost" min="0" placeholder="0" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+            </div>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600">Müşteriden Alınan (TL)</label>
+            <input type="number" id="sv_charged" min="0" placeholder="0" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+          </div>
+          <div class="flex items-center gap-3">
+            <input type="checkbox" id="sv_warranty" class="rounded">
+            <label for="sv_warranty" class="text-sm text-slate-700 cursor-pointer">Garanti kapsamında</label>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600">Not (opsiyonel)</label>
+            <textarea id="sv_note" rows="2" placeholder="Ek açıklama..." class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm resize-none"></textarea>
+          </div>
+          <div class="flex gap-2">
+            <button onclick="saveServiceEntry()" class="flex-1 py-2 bg-slate-900 text-white rounded-lg text-sm font-semibold hover:bg-slate-700 transition-colors">Kaydet</button>
+            <button onclick="cancelServiceEdit()" id="sv_cancel_btn" class="hidden px-4 py-2 bg-slate-100 text-slate-700 rounded-lg text-sm font-semibold hover:bg-slate-200">İptal</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- En çok arıza veren ürünler -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="font-bold text-slate-900 mb-4">⚠️ En Çok Arıza Veren</h3>
+        <div id="mostFaultyList"></div>
+      </div>
+
+      <!-- En sık değiştirilen parçalar -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="font-bold text-slate-900 mb-4">🔩 En Sık Değiştirilen Parçalar</h3>
+        <div id="mostReplacedParts"></div>
+      </div>
+    </div>
+
+    <!-- Arıza trendi grafiği -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-6">
+      <div class="flex items-center justify-between mb-4 flex-wrap gap-3">
+        <h3 class="font-bold text-slate-900">Aylık Arıza Trendi</h3>
+        <div class="flex gap-2">
+          <select id="sv_filter_year" class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm"></select>
+          <select id="sv_filter_product" class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm">
+            <option value="">Tüm Ürünler</option>
+          </select>
+          <button onclick="renderServiceTab()" class="pill-btn bg-slate-100 text-slate-800 hover:bg-slate-200 text-xs">Uygula</button>
+        </div>
+      </div>
+      <canvas id="serviceChart" height="70"></canvas>
+    </div>
+
+    <!-- Servis kayıtları tablosu -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-slate-900">Servis Kayıtları</h3>
+        <div class="flex gap-2">
+          <select id="sv_table_filter" class="px-3 py-1.5 border border-slate-200 rounded-lg text-sm">
+            <option value="">Tüm Ürünler</option>
+          </select>
+          <button onclick="exportServiceExcel()" class="pill-btn bg-green-50 text-green-800 border border-green-200 hover:bg-green-100 text-xs">⬇ Excel</button>
+        </div>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50">
+            <tr>
+              <th class="px-3 py-2 text-left">Tarih</th>
+              <th class="px-3 py-2 text-left">Ürün</th>
+              <th class="px-3 py-2 text-left">Arıza Tipi</th>
+              <th class="px-3 py-2 text-left">Parça</th>
+              <th class="px-3 py-2 num">Maliyet</th>
+              <th class="px-3 py-2 num">Alınan</th>
+              <th class="px-3 py-2 num">Kar/Zarar</th>
+              <th class="px-3 py-2 text-center">Garanti</th>
+              <th class="px-3 py-2"></th>
+            </tr>
+          </thead>
+          <tbody id="serviceTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </section>
+  <!-- ===== / TEKNİK SERVİS SEKMESİ ===== -->
+
   <section id="tab-history" class="tab-content hidden">
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
       <h2 class="text-lg font-bold text-slate-900 mb-1">Fiyat Değişiklik Geçmişi</h2>
@@ -529,6 +658,83 @@
       </div>
     </div>
   </section>
+
+  <!-- ===== YURTDIŞI FİYATLARI SEKMESİ ===== -->
+  <section id="tab-export" class="tab-content hidden">
+
+    <!-- Bilgi bandı -->
+    <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4 flex items-start gap-2">
+      <div class="text-blue-600 text-lg">🌍</div>
+      <div class="text-sm text-blue-900">
+        <strong>Beyza Hanım'ın Fiyat Paneli</strong> — Her ürün için USD ve EUR satış fiyatını gir.
+        Minimum fiyat <strong>toplam maliyet × %150</strong> olarak hesaplanır (yurt içiyle aynı kural).
+        Kar marjı otomatik güncellenir.
+      </div>
+    </div>
+
+    <!-- Özet kartlar -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+        <div class="text-xs text-slate-500 uppercase tracking-wider">Fiyatı Girilmiş</div>
+        <div class="text-2xl font-bold text-slate-900 mt-1" id="exp_statPriced">0</div>
+        <div class="text-xs text-slate-400 mt-1" id="exp_statTotal"></div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+        <div class="text-xs text-slate-500 uppercase tracking-wider">⚠ Min Altında</div>
+        <div class="text-2xl font-bold text-red-600 mt-1" id="exp_statWarn">0</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+        <div class="text-xs text-slate-500 uppercase tracking-wider">Ort. USD Kar %</div>
+        <div class="text-2xl font-bold text-emerald-600 mt-1" id="exp_statMarginUSD">—</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+        <div class="text-xs text-slate-500 uppercase tracking-wider">Ort. EUR Kar %</div>
+        <div class="text-2xl font-bold text-emerald-600 mt-1" id="exp_statMarginEUR">—</div>
+      </div>
+    </div>
+
+    <!-- Filtre ve export -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 mb-3 flex flex-wrap gap-2 items-center">
+      <input type="text" id="exp_searchInput" placeholder="🔍 Ürün ara..." class="flex-1 min-w-[200px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+      <select id="exp_groupFilter" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
+        <option value="">Tüm Gruplar</option>
+      </select>
+      <select id="exp_statusFilter" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
+        <option value="all">Tüm Durumlar</option>
+        <option value="warn">⚠ Min Altındakiler</option>
+        <option value="missing">Fiyat Girilmemiş</option>
+        <option value="ok">✓ Uygun Fiyatlılar</option>
+      </select>
+      <div class="flex-1"></div>
+      <button onclick="exportExpPricesExcel()" class="pill-btn bg-white border border-slate-200 hover:bg-slate-50">⬇ Excel'e Aktar</button>
+    </div>
+
+    <!-- Tablo -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="overflow-x-auto" style="max-height: 72vh;">
+        <table class="w-full text-sm">
+          <thead class="sticky top-0 z-10">
+            <tr>
+              <th class="px-3 py-2 text-left">Ürün</th>
+              <th class="px-3 py-2 text-left">Grup</th>
+              <th class="px-3 py-2 num">Toplam Maliyet</th>
+              <th class="px-3 py-2 num">Min USD (×1.5)</th>
+              <th class="px-3 py-2 num">Min EUR (×1.5)</th>
+              <th class="px-3 py-2 num" style="width:140px">💲 USD Fiyatı</th>
+              <th class="px-3 py-2 num">USD Kar %</th>
+              <th class="px-3 py-2 num" style="width:140px">💶 EUR Fiyatı</th>
+              <th class="px-3 py-2 num">EUR Kar %</th>
+              <th class="px-3 py-2"></th>
+            </tr>
+          </thead>
+          <tbody id="expPriceTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </section>
+  <!-- ===== / YURTDIŞI FİYATLARI SEKMESİ ===== -->
+
 </div>
 
 <!-- Product modal -->
@@ -795,6 +1001,7 @@ let state = {
   settings: DEFAULT_SETTINGS,
   history: [],
   sales: [],
+  service: [],
   filter: { search: '', group: '', warning: 'all' },
   currentTab: 'products',
   editingProductIndex: null,
@@ -829,7 +1036,9 @@ async function persist() {
       categories: state.categories,
       settings: state.settings,
       history: state.history,
-      sales: state.sales
+      sales: state.sales,
+      service: state.service,
+      export_prices: state.export_prices
     });
     const { error } = await sb.from('app_data').upsert({ key: 'main', data: payload }, { onConflict: 'key' });
     if (error) console.error('Supabase kayıt hatası:', error);
@@ -846,6 +1055,8 @@ async function loadFromSupabase() {
     if (parsed.settings) state.settings = { ...DEFAULT_SETTINGS, ...parsed.settings };
     if (parsed.history) state.history = parsed.history;
     if (parsed.sales) state.sales = parsed.sales;
+    if (parsed.service) state.service = parsed.service;
+    if (parsed.export_prices) state.export_prices = parsed.export_prices;
   } catch(e) { console.error('loadFromSupabase hatası:', e); loadSeed(); }
 }
 
@@ -1404,6 +1615,8 @@ function renderAll() {
   renderHistory();
   renderAnalytics();
   renderSalesTab();
+  renderServiceTab();
+  renderExpPricesTab();
 }
 
 function openProductModal(idx) {
@@ -1727,6 +1940,12 @@ function init() {
       if (btn.dataset.tab === 'sales') {
         setTimeout(() => renderSalesTab(), 50);
       }
+      if (btn.dataset.tab === 'service') {
+        setTimeout(() => renderServiceTab(), 50);
+      }
+      if (btn.dataset.tab === 'export') {
+        setTimeout(() => renderExpPricesTab(), 50);
+      }
     };
   });
   document.getElementById('trendProductFilter').onchange = () => renderTrendChart();
@@ -1786,8 +2005,293 @@ function init() {
 document.addEventListener('DOMContentLoaded', init);
 
 // ============================================================
-// SATIŞ TAKİBİ
+// TEKNİK SERVİS
 // ============================================================
+
+let serviceChartInstance = null;
+let editingServiceId = null;
+
+const FAULT_TYPES = {
+  motor: 'Motor', 'bıçak': 'Bıçak / Kesici', sarj: 'Şarj / Batarya',
+  elektronik: 'Elektronik / Kart', kablo: 'Kablo / Bağlantı',
+  govde: 'Gövde / Plastik', diger: 'Diğer'
+};
+
+function renderServiceTab() {
+  // Set today as default date
+  const dateEl = document.getElementById('sv_date');
+  if (dateEl && !dateEl.value) dateEl.value = new Date().toISOString().slice(0, 10);
+
+  // Populate product selects
+  const productOpts = state.products.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+  const allOpts = '<option value="">Tüm Ürünler</option>' + productOpts;
+  ['sv_product', 'sv_filter_product', 'sv_table_filter'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = id === 'sv_product' ? productOpts : allOpts;
+  });
+
+  // Year filter
+  const years = new Set();
+  const now = new Date();
+  years.add(now.getFullYear());
+  years.add(now.getFullYear() - 1);
+  state.service.forEach(s => { if (s.date) years.add(new Date(s.date).getFullYear()); });
+  const yrSel = document.getElementById('sv_filter_year');
+  if (yrSel) yrSel.innerHTML = [...years].sort((a,b)=>b-a).map(y => `<option value="${y}">${y}</option>`).join('');
+
+  // Table filter change
+  const tf = document.getElementById('sv_table_filter');
+  if (tf) tf.onchange = renderServiceTable;
+
+  renderServiceSummaryCards();
+  renderServiceChart();
+  renderMostFaulty();
+  renderMostReplacedParts();
+  renderServiceTable();
+}
+
+function renderServiceSummaryCards() {
+  const total = state.service.length;
+  const totalCost = state.service.reduce((a,s) => a + (s.part_cost||0) + (s.labor_cost||0), 0);
+  const totalCharged = state.service.reduce((a,s) => a + (s.charged||0), 0);
+  const profit = totalCharged - totalCost;
+  const warranty = state.service.filter(s => s.warranty).length;
+
+  const el = document.getElementById('serviceSummaryCards');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+      <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Toplam Servis</div>
+      <div class="text-2xl font-bold text-slate-900">${total} kayıt</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+      <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Toplam Maliyet</div>
+      <div class="text-2xl font-bold text-slate-900">${fmtTL2(totalCost)}</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+      <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Servis Kar/Zarar</div>
+      <div class="text-2xl font-bold ${profit >= 0 ? 'text-green-600' : 'text-red-600'}">${fmtTL2(profit)}</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+      <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">Garanti Kapsamı</div>
+      <div class="text-2xl font-bold text-amber-600">${warranty} / ${total}</div>
+    </div>
+  `;
+}
+
+function renderServiceChart() {
+  const year = parseInt(document.getElementById('sv_filter_year')?.value) || new Date().getFullYear();
+  const pid = document.getElementById('sv_filter_product')?.value || '';
+  const filtered = state.service.filter(s => {
+    const y = s.date ? new Date(s.date).getFullYear() : null;
+    return y === year && (!pid || s.productId === pid);
+  });
+
+  const monthly = Array(12).fill(0).map((_,i) => ({ count: 0, cost: 0 }));
+  filtered.forEach(s => {
+    const m = s.date ? new Date(s.date).getMonth() : 0;
+    monthly[m].count++;
+    monthly[m].cost += (s.part_cost||0) + (s.labor_cost||0);
+  });
+
+  const canvas = document.getElementById('serviceChart');
+  if (!canvas) return;
+  if (serviceChartInstance) { serviceChartInstance.destroy(); serviceChartInstance = null; }
+  serviceChartInstance = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: MONTHS,
+      datasets: [
+        { label: 'Arıza Sayısı', data: monthly.map(m => m.count), backgroundColor: '#ef444499', borderColor: '#ef4444', borderWidth: 1, borderRadius: 4, yAxisID: 'y' },
+        { label: 'Maliyet (TL)', data: monthly.map(m => m.cost), backgroundColor: '#f9731699', borderColor: '#f97316', borderWidth: 1, borderRadius: 4, type: 'line', yAxisID: 'y2' }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: true } },
+      scales: {
+        y: { beginAtZero: true, title: { display: true, text: 'Arıza Sayısı' }, ticks: { stepSize: 1 } },
+        y2: { beginAtZero: true, position: 'right', title: { display: true, text: 'Maliyet (TL)' }, grid: { drawOnChartArea: false }, ticks: { callback: v => fmtTL2(v) } }
+      }
+    }
+  });
+}
+
+function renderMostFaulty() {
+  const byProduct = {};
+  state.service.forEach(s => {
+    if (!byProduct[s.productId]) byProduct[s.productId] = { count: 0, dates: [] };
+    byProduct[s.productId].count++;
+    if (s.date) byProduct[s.productId].dates.push(new Date(s.date));
+  });
+  const sorted = Object.entries(byProduct).sort((a,b) => b[1].count - a[1].count).slice(0, 8);
+  const el = document.getElementById('mostFaultyList');
+  if (!el) return;
+  if (!sorted.length) { el.innerHTML = '<p class="text-sm text-slate-400">Henüz kayıt yok.</p>'; return; }
+  const max = sorted[0][1].count;
+  el.innerHTML = sorted.map(([pid, d], i) => {
+    const p = state.products.find(x => x.id === pid);
+    const name = p ? escapeHtml(p.name) : pid;
+    const pct = max > 0 ? (d.count / max * 100) : 0;
+    // Ortalama arıza aralığı
+    let avgInterval = '';
+    if (d.dates.length > 1) {
+      d.dates.sort((a,b) => a-b);
+      const diffs = d.dates.slice(1).map((d,i) => (d - d.dates[i]) / (1000*60*60*24*30));
+      const avg = diffs.reduce((a,b) => a+b, 0) / diffs.length;
+      avgInterval = `· ort. ${avg.toFixed(1)} ayda bir`;
+    }
+    return `<div class="mb-3">
+      <div class="flex justify-between text-xs mb-1">
+        <span class="font-medium text-slate-800">${i+1}. ${name}</span>
+        <span class="text-slate-500">${d.count} arıza ${avgInterval}</span>
+      </div>
+      <div class="h-2 bg-slate-100 rounded-full"><div class="h-2 bg-red-400 rounded-full" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderMostReplacedParts() {
+  const byPart = {};
+  state.service.forEach(s => {
+    const key = (s.part || '').trim().toLowerCase();
+    if (!key) return;
+    if (!byPart[key]) byPart[key] = { display: s.part, count: 0 };
+    byPart[key].count++;
+  });
+  const sorted = Object.values(byPart).sort((a,b) => b.count - a.count).slice(0, 8);
+  const el = document.getElementById('mostReplacedParts');
+  if (!el) return;
+  if (!sorted.length) { el.innerHTML = '<p class="text-sm text-slate-400">Henüz kayıt yok.</p>'; return; }
+  const max = sorted[0].count;
+  el.innerHTML = sorted.map((d, i) => {
+    const pct = max > 0 ? (d.count / max * 100) : 0;
+    return `<div class="mb-3">
+      <div class="flex justify-between text-xs mb-1">
+        <span class="font-medium text-slate-800">${i+1}. ${escapeHtml(d.display)}</span>
+        <span class="text-slate-500">${d.count} kez</span>
+      </div>
+      <div class="h-2 bg-slate-100 rounded-full"><div class="h-2 bg-orange-400 rounded-full" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderServiceTable() {
+  const pid = document.getElementById('sv_table_filter')?.value || '';
+  const filtered = state.service
+    .filter(s => !pid || s.productId === pid)
+    .sort((a,b) => (b.date||'').localeCompare(a.date||''));
+  const el = document.getElementById('serviceTbody');
+  if (!el) return;
+  if (!filtered.length) {
+    el.innerHTML = '<tr><td colspan="9" class="px-3 py-8 text-center text-slate-400">Henüz servis kaydı yok.</td></tr>';
+    return;
+  }
+  el.innerHTML = filtered.map(s => {
+    const p = state.products.find(x => x.id === s.productId);
+    const name = p ? escapeHtml(p.name) : s.productId;
+    const cost = (s.part_cost||0) + (s.labor_cost||0);
+    const profit = (s.charged||0) - cost;
+    const profitColor = profit >= 0 ? 'text-green-700' : 'text-red-700';
+    const faultLabel = FAULT_TYPES[s.fault_type] || s.fault_type;
+    return `<tr class="border-t border-slate-100 hover:bg-slate-50">
+      <td class="px-3 py-2 text-slate-600 whitespace-nowrap">${s.date || '—'}</td>
+      <td class="px-3 py-2 font-medium text-slate-800">${name}</td>
+      <td class="px-3 py-2"><span class="inline-block bg-slate-100 rounded px-2 py-0.5 text-xs">${faultLabel}</span></td>
+      <td class="px-3 py-2 text-slate-600">${escapeHtml(s.part||'—')}</td>
+      <td class="px-3 py-2 num text-slate-600">${fmtTL2(cost)}</td>
+      <td class="px-3 py-2 num">${fmtTL2(s.charged||0)}</td>
+      <td class="px-3 py-2 num font-semibold ${profitColor}">${profit >= 0 ? '+' : ''}${fmtTL2(profit)}</td>
+      <td class="px-3 py-2 text-center">${s.warranty ? '✅' : '—'}</td>
+      <td class="px-3 py-2">
+        <div class="flex gap-2">
+          <button onclick="editServiceEntry('${s.id}')" class="text-blue-500 hover:text-blue-700 text-xs">Düzenle</button>
+          <button onclick="deleteServiceEntry('${s.id}')" class="text-red-400 hover:text-red-700 text-xs">Sil</button>
+        </div>
+      </td>
+    </tr>
+    ${s.note ? `<tr class="border-t-0"><td colspan="9" class="px-3 pb-2 text-xs text-slate-400 italic">📝 ${escapeHtml(s.note)}</td></tr>` : ''}`;
+  }).join('');
+}
+
+function saveServiceEntry() {
+  const productId = document.getElementById('sv_product').value;
+  const date = document.getElementById('sv_date').value;
+  const fault_type = document.getElementById('sv_fault_type').value;
+  const part = document.getElementById('sv_part').value.trim();
+  const part_cost = parseFloat(document.getElementById('sv_part_cost').value) || 0;
+  const labor_cost = parseFloat(document.getElementById('sv_labor_cost').value) || 0;
+  const charged = parseFloat(document.getElementById('sv_charged').value) || 0;
+  const warranty = document.getElementById('sv_warranty').checked;
+  const note = document.getElementById('sv_note').value.trim();
+
+  if (!productId || !date) { alert('Ürün ve tarih zorunlu!'); return; }
+
+  const entry = { id: editingServiceId || 'srv_'+Date.now(), productId, date, fault_type, part, part_cost, labor_cost, charged, warranty, note };
+
+  if (editingServiceId) {
+    const idx = state.service.findIndex(s => s.id === editingServiceId);
+    if (idx >= 0) state.service[idx] = entry;
+  } else {
+    state.service.push(entry);
+  }
+
+  persist();
+  cancelServiceEdit();
+  renderServiceTab();
+}
+
+function editServiceEntry(id) {
+  const s = state.service.find(x => x.id === id);
+  if (!s) return;
+  editingServiceId = id;
+  document.getElementById('serviceFormTitle').textContent = 'Kaydı Düzenle';
+  document.getElementById('sv_product').value = s.productId;
+  document.getElementById('sv_date').value = s.date;
+  document.getElementById('sv_fault_type').value = s.fault_type;
+  document.getElementById('sv_part').value = s.part || '';
+  document.getElementById('sv_part_cost').value = s.part_cost || '';
+  document.getElementById('sv_labor_cost').value = s.labor_cost || '';
+  document.getElementById('sv_charged').value = s.charged || '';
+  document.getElementById('sv_warranty').checked = s.warranty || false;
+  document.getElementById('sv_note').value = s.note || '';
+  document.getElementById('sv_cancel_btn').classList.remove('hidden');
+  document.getElementById('sv_product').scrollIntoView({ behavior: 'smooth', block: 'center' });
+}
+
+function cancelServiceEdit() {
+  editingServiceId = null;
+  document.getElementById('serviceFormTitle').textContent = 'Yeni Servis Kaydı';
+  document.getElementById('sv_product').selectedIndex = 0;
+  document.getElementById('sv_date').value = new Date().toISOString().slice(0,10);
+  document.getElementById('sv_fault_type').selectedIndex = 0;
+  document.getElementById('sv_part').value = '';
+  document.getElementById('sv_part_cost').value = '';
+  document.getElementById('sv_labor_cost').value = '';
+  document.getElementById('sv_charged').value = '';
+  document.getElementById('sv_warranty').checked = false;
+  document.getElementById('sv_note').value = '';
+  document.getElementById('sv_cancel_btn').classList.add('hidden');
+}
+
+function deleteServiceEntry(id) {
+  if (!confirm('Bu kaydı silmek istediğine emin misin?')) return;
+  state.service = state.service.filter(s => s.id !== id);
+  persist(); renderServiceTab();
+}
+
+function exportServiceExcel() {
+  const rows = [['Tarih','Ürün','Arıza Tipi','Parça','Parça Maliyeti','İşçilik','Toplam Maliyet','Alınan','Kar/Zarar','Garanti','Not']];
+  state.service.sort((a,b)=>(b.date||'').localeCompare(a.date||'')).forEach(s => {
+    const p = state.products.find(x => x.id === s.productId);
+    const cost = (s.part_cost||0) + (s.labor_cost||0);
+    rows.push([s.date||'', p?.name||s.productId, FAULT_TYPES[s.fault_type]||s.fault_type, s.part||'', s.part_cost||0, s.labor_cost||0, cost, s.charged||0, (s.charged||0)-cost, s.warranty?'Evet':'Hayır', s.note||'']);
+  });
+  const csv = rows.map(r => r.map(v => `"${v}"`).join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'teknik-servis.csv'; a.click();
+}
+
 
 let salesChartInstance = null;
 let salesCsvData = [];
@@ -2156,6 +2660,167 @@ function exportSalesExcel() {
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `satis-${year}.csv`; a.click();
 }
 
+
+
+// ============================================================
+// YURTDIŞI FİYATLARI (BEYZA HANIM)
+// ============================================================
+
+function renderExpPricesTab() {
+  if (!state.export_prices) state.export_prices = {};
+
+  const gf = document.getElementById('exp_groupFilter');
+  if (gf && gf.options.length <= 1) {
+    gf.innerHTML = '<option value="">Tüm Gruplar</option>' +
+      state.categories.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+  }
+
+  const search  = (document.getElementById('exp_searchInput')?.value || '').toLowerCase();
+  const group   = document.getElementById('exp_groupFilter')?.value || '';
+  const status  = document.getElementById('exp_statusFilter')?.value || 'all';
+
+  const usdRate = getRateForCurrency('USD');
+  const eurRate = getRateForCurrency('EUR');
+
+  let rows = state.products.map((p) => {
+    const calc   = calculate(p);
+    const ep     = state.export_prices[p.id] || {};
+    const minUSD = usdRate > 0 ? calc.min_sale_price / usdRate : null;
+    const minEUR = eurRate > 0 ? calc.min_sale_price / eurRate : null;
+
+    const usdPrice  = ep.usd ?? null;
+    const eurPrice  = ep.eur ?? null;
+
+    const usdPriceTL = usdPrice != null ? usdPrice * usdRate : null;
+    const eurPriceTL = eurPrice != null ? eurPrice * eurRate : null;
+
+    const usdProfit  = usdPriceTL != null ? usdPriceTL - calc.total_cost : null;
+    const eurProfit  = eurPriceTL != null ? eurPriceTL - calc.total_cost : null;
+    const usdMargin  = usdPriceTL != null && calc.total_cost > 0 ? usdProfit / calc.total_cost : null;
+    const eurMargin  = eurPriceTL != null && calc.total_cost > 0 ? eurProfit / calc.total_cost : null;
+
+    const usdBelowMin = usdPrice != null && minUSD != null && usdPrice < minUSD;
+    const eurBelowMin = eurPrice != null && minEUR != null && eurPrice < minEUR;
+    const belowMin    = usdBelowMin || eurBelowMin;
+    const hasPrices   = usdPrice != null || eurPrice != null;
+
+    return { p, calc, ep, minUSD, minEUR, usdPrice, eurPrice, usdMargin, eurMargin, usdBelowMin, eurBelowMin, belowMin, hasPrices };
+  });
+
+  if (search) rows = rows.filter(r => r.p.name.toLowerCase().includes(search));
+  if (group)  rows = rows.filter(r => r.p.group === group);
+  if (status === 'warn')    rows = rows.filter(r => r.belowMin);
+  if (status === 'missing') rows = rows.filter(r => !r.hasPrices);
+  if (status === 'ok')      rows = rows.filter(r => r.hasPrices && !r.belowMin);
+
+  document.getElementById('exp_statTotal').textContent   = '/ ' + rows.length + ' ürün';
+  document.getElementById('exp_statPriced').textContent  = rows.filter(r => r.hasPrices).length;
+  document.getElementById('exp_statWarn').textContent    = rows.filter(r => r.belowMin).length;
+
+  const withUSD = rows.filter(r => r.usdMargin != null);
+  const withEUR = rows.filter(r => r.eurMargin != null);
+  document.getElementById('exp_statMarginUSD').textContent = withUSD.length
+    ? fmtPct(withUSD.reduce((s,r) => s + r.usdMargin, 0) / withUSD.length) : '—';
+  document.getElementById('exp_statMarginEUR').textContent = withEUR.length
+    ? fmtPct(withEUR.reduce((s,r) => s + r.eurMargin, 0) / withEUR.length) : '—';
+
+  const tbody = document.getElementById('expPriceTbody');
+  tbody.innerHTML = rows.map(({ p, calc, minUSD, minEUR, usdPrice, eurPrice, usdMargin, eurMargin, usdBelowMin, eurBelowMin, belowMin }) => {
+    const cat = getCategoryById(p.group);
+    const rowBg = belowMin ? 'warn-bg warn-row' : 'ok-bg ok-row';
+
+    const marginClass = (m) => m == null ? '' : m >= 0.5 ? 'text-emerald-700 font-semibold' : m >= 0 ? 'text-amber-700' : 'text-red-700 font-semibold';
+    const inputBorder = (below) => below ? 'border-red-400 bg-red-50' : 'border-slate-200';
+
+    const usdMinHint = minUSD != null ? 'min: $' + minUSD.toFixed(2) : '';
+    const eurMinHint = minEUR != null ? 'min: €' + minEUR.toFixed(2) : '';
+    const pid = escapeHtml(p.id);
+
+    return '<tr class="' + rowBg + '">' +
+      '<td class="px-3 py-2 font-medium text-slate-900">' + (belowMin ? '<span class="text-red-600 mr-1">⚠</span>' : '') + escapeHtml(p.name) + '</td>' +
+      '<td class="px-3 py-2"><span class="group-badge grp-' + p.group + '">' + escapeHtml(cat.name) + '</span></td>' +
+      '<td class="px-3 py-2 num"><div>' + fmtTL(calc.total_cost) + '</div><div class="sub-usd">' + fmtUSD(calc.total_cost_usd) + '</div></td>' +
+      '<td class="px-3 py-2 num text-emerald-700">' + (minUSD != null ? '$' + minUSD.toFixed(2) : '—') + '</td>' +
+      '<td class="px-3 py-2 num text-emerald-700">' + (minEUR != null ? '€' + minEUR.toFixed(2) : '—') + '</td>' +
+      '<td class="px-3 py-2"><div class="flex items-center gap-1"><span class="text-slate-500 text-xs font-medium">$</span>' +
+        '<input type="number" step="0.01" min="0" class="w-24 px-2 py-1 border rounded text-sm num text-right ' + inputBorder(usdBelowMin) + '" ' +
+        'placeholder="' + usdMinHint + '" value="' + (usdPrice != null ? usdPrice : '') + '" ' +
+        'onchange="saveExpPrice(\'' + pid + '\',\'usd\',this.value)" ' +
+        'oninput="previewExpMargin(this,\'' + pid + '\',\'usd\',' + calc.total_cost + ')"></div>' +
+        (usdBelowMin ? '<div class="text-[10px] text-red-600 mt-0.5">Min: $' + (minUSD != null ? minUSD.toFixed(2) : '') + '</div>' : '') +
+      '</td>' +
+      '<td class="px-3 py-2 num ' + marginClass(usdMargin) + '" id="exp_usdm_' + pid + '">' + (usdMargin != null ? fmtPct(usdMargin) : '<span class="text-slate-400">—</span>') + '</td>' +
+      '<td class="px-3 py-2"><div class="flex items-center gap-1"><span class="text-slate-500 text-xs font-medium">€</span>' +
+        '<input type="number" step="0.01" min="0" class="w-24 px-2 py-1 border rounded text-sm num text-right ' + inputBorder(eurBelowMin) + '" ' +
+        'placeholder="' + eurMinHint + '" value="' + (eurPrice != null ? eurPrice : '') + '" ' +
+        'onchange="saveExpPrice(\'' + pid + '\',\'eur\',this.value)" ' +
+        'oninput="previewExpMargin(this,\'' + pid + '\',\'eur\',' + calc.total_cost + ')"></div>' +
+        (eurBelowMin ? '<div class="text-[10px] text-red-600 mt-0.5">Min: €' + (minEUR != null ? minEUR.toFixed(2) : '') + '</div>' : '') +
+      '</td>' +
+      '<td class="px-3 py-2 num ' + marginClass(eurMargin) + '" id="exp_eurm_' + pid + '">' + (eurMargin != null ? fmtPct(eurMargin) : '<span class="text-slate-400">—</span>') + '</td>' +
+      '<td class="px-3 py-2 text-right"><button onclick="clearExpPrice(\'' + pid + '\')" class="pill-btn bg-red-50 text-red-600 hover:bg-red-100 border border-red-200 text-xs">Temizle</button></td>' +
+    '</tr>';
+  }).join('');
+}
+
+function saveExpPrice(productId, currency, rawVal) {
+  if (!state.export_prices) state.export_prices = {};
+  if (!state.export_prices[productId]) state.export_prices[productId] = {};
+  const val = parseFloat(rawVal);
+  state.export_prices[productId][currency] = (!rawVal || isNaN(val)) ? null : val;
+  persist();
+  renderExpPricesTab();
+}
+
+function clearExpPrice(productId) {
+  if (state.export_prices) delete state.export_prices[productId];
+  persist();
+  renderExpPricesTab();
+}
+
+function previewExpMargin(inputEl, productId, currency, totalCostTL) {
+  const val = parseFloat(inputEl.value);
+  const rate = getRateForCurrency(currency === 'usd' ? 'USD' : 'EUR');
+  const cell = document.getElementById('exp_' + currency + 'm_' + productId);
+  if (!cell) return;
+  if (isNaN(val) || val <= 0 || rate <= 0) { cell.innerHTML = '<span class="text-slate-400">—</span>'; return; }
+  const priceTL = val * rate;
+  const margin  = totalCostTL > 0 ? (priceTL - totalCostTL) / totalCostTL : 0;
+  const cls = margin >= 0.5 ? 'text-emerald-700 font-semibold' : margin >= 0 ? 'text-amber-700' : 'text-red-700 font-semibold';
+  cell.className = 'px-3 py-2 num ' + cls;
+  cell.textContent = fmtPct(margin);
+}
+
+function exportExpPricesExcel() {
+  const usdRate = getRateForCurrency('USD');
+  const eurRate = getRateForCurrency('EUR');
+  const rows = [['Ürün','Grup','Toplam Maliyet TL','Toplam Maliyet USD','Min USD','Min EUR','USD Fiyatı','USD Kar %','EUR Fiyatı','EUR Kar %']];
+  state.products.forEach(p => {
+    const calc   = calculate(p);
+    const ep     = (state.export_prices || {})[p.id] || {};
+    const cat    = getCategoryById(p.group);
+    const minUSD = usdRate > 0 ? (calc.min_sale_price / usdRate).toFixed(2) : '—';
+    const minEUR = eurRate > 0 ? (calc.min_sale_price / eurRate).toFixed(2) : '—';
+    const usdP   = ep.usd != null ? ep.usd : '';
+    const eurP   = ep.eur != null ? ep.eur : '';
+    const usdM   = ep.usd != null && usdRate > 0 && calc.total_cost > 0
+      ? ((ep.usd * usdRate - calc.total_cost) / calc.total_cost * 100).toFixed(1) + '%' : '—';
+    const eurM   = ep.eur != null && eurRate > 0 && calc.total_cost > 0
+      ? ((ep.eur * eurRate - calc.total_cost) / calc.total_cost * 100).toFixed(1) + '%' : '—';
+    rows.push([p.name, cat.name, calc.total_cost.toFixed(2), calc.total_cost_usd.toFixed(2), minUSD, minEUR, usdP, usdM, eurP, eurM]);
+  });
+  const csv = rows.map(r => r.map(v => (typeof v === 'string' && v.includes(',')) ? '"' + v + '"' : v).join(';')).join('\n');
+  const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = 'yurtdisi-fiyatlari-' + new Date().toISOString().slice(0,10) + '.csv'; a.click();
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  ['exp_searchInput','exp_groupFilter','exp_statusFilter'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) { el.addEventListener('input', renderExpPricesTab); el.addEventListener('change', renderExpPricesTab); }
+  });
+});
 
 </script>
 </body>
