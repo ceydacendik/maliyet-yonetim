@@ -1,0 +1,2162 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maliyet & Fiyat Yönetimi — İthal Ürünler</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+  .tab-active { background: #1e293b; color: white; }
+  .tab-inactive { background: transparent; color: #64748b; }
+  .tab-inactive:hover { background: #f1f5f9; }
+  .group-badge { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 999px; font-size: 11px; font-weight: 500; }
+  .grp-tiras_makinesi { background: #dbeafe; color: #1e40af; }
+  .grp-duzlestirici_masa { background: #fce7f3; color: #9d174d; }
+  .grp-firca { background: #d1fae5; color: #065f46; }
+  .grp-makas { background: #fef3c7; color: #92400e; }
+  .grp-pens { background: #ede9fe; color: #5b21b6; }
+  .grp-jilet { background: #fee2e2; color: #991b1b; }
+  .grp-diger { background: #f1f5f9; color: #475569; }
+  .warn-bg { background: #fef2f2; }
+  .ok-bg { background: white; }
+  .ok-row:hover { background: #f8fafc; }
+  .warn-row:hover { background: #fee2e2; }
+  table { border-collapse: collapse; }
+  th, td { border-bottom: 1px solid #e2e8f0; }
+  th { background: #f8fafc; font-weight: 600; font-size: 11px; text-transform: uppercase; color: #475569; letter-spacing: 0.5px; }
+  .num { font-variant-numeric: tabular-nums; text-align: right; font-feature-settings: "tnum"; }
+  .modal-backdrop { background: rgba(15, 23, 42, 0.5); backdrop-filter: blur(4px); }
+  details summary { cursor: pointer; list-style: none; }
+  details summary::-webkit-details-marker { display: none; }
+  .pill-btn { padding: 4px 10px; border-radius: 6px; font-size: 12px; font-weight: 500; transition: all 0.15s; }
+  .sub-usd { font-size: 10px; color: #94a3b8; font-weight: 400; }
+</style>
+</head>
+<body class="bg-slate-100 min-h-screen">
+
+<!-- ===== GİRİŞ EKRANI ===== -->
+<div id="loginScreen" class="fixed inset-0 z-[9999] bg-slate-100 flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-8 border border-slate-200">
+    <div class="text-center mb-8">
+      <h1 class="text-2xl font-bold text-slate-900">Maliyet Yönetimi</h1>
+      <p class="text-sm text-slate-500 mt-1">İthal Ürünler · Giriş Yap</p>
+    </div>
+    <div id="loginError" class="hidden mb-4 bg-red-50 border border-red-200 rounded-lg px-4 py-3 text-sm text-red-700"></div>
+    <div class="space-y-4">
+      <div>
+        <label class="text-sm font-medium text-slate-700">E-posta</label>
+        <input type="email" id="loginEmail" autocomplete="email" placeholder="ornek@email.com"
+          class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
+      </div>
+      <div>
+        <label class="text-sm font-medium text-slate-700">Şifre</label>
+        <input type="password" id="loginPassword" autocomplete="current-password" placeholder="••••••••"
+          class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-slate-400">
+      </div>
+      <button id="loginBtn" onclick="doLogin()"
+        class="w-full py-2.5 bg-slate-900 text-white rounded-lg text-sm font-semibold hover:bg-slate-700 transition-colors">
+        Giriş Yap
+      </button>
+    </div>
+    <p class="text-xs text-slate-400 text-center mt-6">Hesap oluşturmak için Ceyda'ya yazın.</p>
+    <div id="loginLoading" class="hidden text-center mt-4 text-sm text-slate-500">Giriş yapılıyor...</div>
+  </div>
+</div>
+<!-- ===== / GİRİŞ EKRANI ===== -->
+
+<!-- ===== ANA UYGULAMA (giriş yapılmadan gizli) ===== -->
+<div id="mainApp" class="hidden">
+
+<div class="max-w-[1700px] mx-auto px-4 py-6">
+
+  <header class="mb-6 flex items-start justify-between gap-4 flex-wrap">
+    <div>
+      <h1 class="text-2xl font-bold text-slate-900">Maliyet & Fiyat Yönetimi</h1>
+      <p class="text-sm text-slate-500 mt-1">İthal Ürünler · Prototip v1.2</p>
+    </div>
+    <div class="flex gap-3 items-center bg-white rounded-xl px-4 py-3 shadow-sm border border-slate-200">
+      <div class="text-right">
+        <div class="text-[10px] uppercase tracking-wider text-slate-500">USD Döviz Satış</div>
+        <div class="text-lg font-bold text-slate-900 num" id="rateUSD">—</div>
+      </div>
+      <div class="h-8 w-px bg-slate-200"></div>
+      <div class="text-right">
+        <div class="text-[10px] uppercase tracking-wider text-slate-500">EUR Döviz Satış</div>
+        <div class="text-lg font-bold text-slate-900 num" id="rateEUR">—</div>
+      </div>
+      <div class="h-8 w-px bg-slate-200"></div>
+      <div class="text-right">
+        <div class="text-[10px] uppercase tracking-wider text-slate-500">TCMB Tarih</div>
+        <div class="text-xs font-medium text-slate-700" id="ratesDate">—</div>
+      </div>
+      <button id="refreshRates" class="pill-btn bg-slate-900 text-white hover:bg-slate-700">↻ Yenile</button>
+    </div>
+    <div class="flex items-center gap-2 bg-white rounded-xl px-4 py-3 shadow-sm border border-slate-200">
+      <span class="text-xs text-slate-500" id="userEmailDisplay">—</span>
+      <button onclick="doLogout()" class="pill-btn bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 text-xs">Çıkış</button>
+    </div>
+  </header>
+
+  <nav class="flex gap-1 mb-4 bg-white p-1 rounded-xl shadow-sm border border-slate-200 w-fit">
+    <button data-tab="products" class="tab-btn pill-btn tab-active">Ürünler</button>
+    <button data-tab="sales" class="tab-btn pill-btn tab-inactive">📦 Satış Takibi</button>
+    <button data-tab="analytics" class="tab-btn pill-btn tab-inactive">📊 Analitik</button>
+    <button data-tab="categories" class="tab-btn pill-btn tab-inactive">Kategoriler & Vergiler</button>
+    <button data-tab="settings" class="tab-btn pill-btn tab-inactive">Ayarlar</button>
+    <button data-tab="history" class="tab-btn pill-btn tab-inactive">Fiyat Geçmişi</button>
+  </nav>
+
+  <section id="tab-products" class="tab-content">
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 mb-3 flex flex-wrap gap-2 items-center">
+      <input type="text" id="searchInput" placeholder="🔍 Ürün ara..." class="flex-1 min-w-[200px] px-3 py-2 border border-slate-200 rounded-lg text-sm">
+      <select id="groupFilter" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
+        <option value="">Tüm Gruplar</option>
+      </select>
+      <select id="warningFilter" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
+        <option value="all">Tüm Durumlar</option>
+        <option value="warn">⚠ %50 Altındakiler</option>
+        <option value="ok">✓ Sadece Güvenli</option>
+      </select>
+      <div class="flex-1"></div>
+      <button id="addProductBtn" class="pill-btn bg-emerald-600 text-white hover:bg-emerald-700">+ Yeni Ürün</button>
+      <button id="exportBtn" class="pill-btn bg-white border border-slate-200 hover:bg-slate-50">⬇ Excel'e Aktar</button>
+    </div>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-3">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+        <div class="text-xs text-slate-500 uppercase tracking-wider">Toplam Ürün</div>
+        <div class="text-2xl font-bold text-slate-900 mt-1" id="statTotal">0</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+        <div class="text-xs text-slate-500 uppercase tracking-wider">⚠ %50 Altında</div>
+        <div class="text-2xl font-bold text-red-600 mt-1" id="statWarn">0</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+        <div class="text-xs text-slate-500 uppercase tracking-wider">Ort. Kar Oranı</div>
+        <div class="text-2xl font-bold text-emerald-600 mt-1" id="statMargin">—</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+        <div class="text-xs text-slate-500 uppercase tracking-wider">Toplam Stok Maliyeti</div>
+        <div class="text-2xl font-bold text-slate-900 mt-1" id="statStockValue">—</div>
+        <div class="text-xs text-slate-400 mt-1" id="statStockValueUSD"></div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+      <div class="overflow-x-auto" style="max-height: 70vh;">
+        <table class="w-full text-sm">
+          <thead class="sticky top-0 z-10">
+            <tr>
+              <th class="px-3 py-2 text-left">Ürün</th>
+              <th class="px-3 py-2 text-left">Grup</th>
+              <th class="px-3 py-2 num" title="Alış fiyatı + alış kuru, parantezde kur riski">Alış</th>
+              <th class="px-3 py-2 num">Çıplak Maliyet</th>
+              <th class="px-3 py-2 num">Vergi+Masraf</th>
+              <th class="px-3 py-2 num">Toplam Maliyet</th>
+              <th class="px-3 py-2 num">Min Satış (×1.5)</th>
+              <th class="px-3 py-2 num" title="%30 toptancı fiyatı — referans">📋 Liste Fiyatı</th>
+              <th class="px-3 py-2 num" title="Yeni / aktif belirlenen fiyat">✏️ Belirlenen</th>
+              <th class="px-3 py-2 num">Kar TL / %</th>
+              <th class="px-3 py-2 num" title="Stok adedi + aylık satış tahmini">📦 Stok</th>
+              <th class="px-3 py-2"></th>
+            </tr>
+          </thead>
+          <tbody id="productTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-analytics" class="tab-content hidden">
+    <!-- Summary cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+        <div class="text-xs text-slate-500 uppercase tracking-wider">💰 Toplam Stok Sermayesi</div>
+        <div class="text-2xl font-bold text-slate-900 mt-1" id="aTotalCapitalTL">—</div>
+        <div class="text-sm text-slate-500" id="aTotalCapitalUSD">—</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+        <div class="text-xs text-slate-500 uppercase tracking-wider">📦 Toplam Stok Adedi</div>
+        <div class="text-2xl font-bold text-slate-900 mt-1" id="aTotalQty">—</div>
+        <div class="text-sm text-slate-500" id="aProductCount">—</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+        <div class="text-xs text-slate-500 uppercase tracking-wider">📈 Tahmini Aylık Kar</div>
+        <div class="text-2xl font-bold text-emerald-700 mt-1" id="aMonthlyProfitTL">—</div>
+        <div class="text-sm text-slate-500" id="aMonthlyProfitUSD">—</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+        <div class="text-xs text-slate-500 uppercase tracking-wider">🎯 Tahmini Yıllık Kar</div>
+        <div class="text-2xl font-bold text-emerald-700 mt-1" id="aAnnualProfitTL">—</div>
+        <div class="text-sm text-slate-500" id="aAnnualProfitUSD">—</div>
+      </div>
+    </div>
+
+    <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 flex items-start gap-2">
+      <div class="text-amber-700 text-lg">💡</div>
+      <div class="text-sm text-amber-900">
+        <strong>Nasıl çalışır?</strong> Her ürünün "Stok Adedi" ve "Aylık Satış Tahmini" alanlarını "Düzenle" ekranından girersin. Sistem bunları kullanarak sermayeni, aylık ve yıllık kar projeksiyonunu hesaplar. Veriler hassas olduğu kadar tahminler de doğru olur.
+      </div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="text-base font-bold text-slate-900 mb-1">Sermayenin Gruplara Dağılımı</h3>
+        <p class="text-xs text-slate-500 mb-3">Stok değeri × adet, kategori bazında</p>
+        <div style="height: 280px;"><canvas id="chartCapitalByGroup"></canvas></div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="text-base font-bold text-slate-900 mb-1">Aylık Kar Potansiyeli — Gruplara Göre</h3>
+        <p class="text-xs text-slate-500 mb-3">Aylık satış tahmini × birim kar, kategori bazında</p>
+        <div style="height: 280px;"><canvas id="chartProfitByGroup"></canvas></div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="text-base font-bold text-slate-900 mb-1">Top 10 — Sermaye Bağlı Ürünler</h3>
+        <p class="text-xs text-slate-500 mb-3">Stok değeri en yüksek ürünler</p>
+        <div style="height: 320px;"><canvas id="chartTopCapital"></canvas></div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="text-base font-bold text-slate-900 mb-1">Top 10 — Aylık Kar Potansiyeli</h3>
+        <p class="text-xs text-slate-500 mb-3">Aylık tahmini kâra en çok katkı sağlayan ürünler</p>
+        <div style="height: 320px;"><canvas id="chartTopProfit"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Currency Risk Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-4">
+      <h3 class="text-base font-bold text-slate-900 mb-1">⚠ Kur Riski — Maliyeti Şişen Ürünler</h3>
+      <p class="text-xs text-slate-500 mb-3">Alış kuru ile güncel TCMB kuru arasındaki fark %5'in üzerinde olan ürünler. Bu ürünleri yeniden almak için bugün daha fazla TL ödersin.</p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr>
+              <th class="px-3 py-2 text-left">Ürün</th>
+              <th class="px-3 py-2 text-left">Grup</th>
+              <th class="px-3 py-2 num">Alış Kuru</th>
+              <th class="px-3 py-2 num">Güncel Kur</th>
+              <th class="px-3 py-2 num">Fark</th>
+              <th class="px-3 py-2 num">Eski Maliyet</th>
+              <th class="px-3 py-2 num">Bugünkü Maliyet</th>
+              <th class="px-3 py-2 num">Etki</th>
+            </tr>
+          </thead>
+          <tbody id="riskTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Margin Trend -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+      <h3 class="text-base font-bold text-slate-900 mb-1">📈 Marj & Fiyat Trendi</h3>
+      <p class="text-xs text-slate-500 mb-3">Fiyat geçmişindeki değişikliklerin görselleştirilmesi.</p>
+      <div id="trendContainer">
+        <p class="text-sm text-slate-400 py-8 text-center" id="trendEmpty">Henüz fiyat değişikliği yok. Bir ürünün fiyatını değiştirdiğinde burada görünür.</p>
+        <div style="height: 320px; display:none;" id="trendCanvasWrap"><canvas id="chartTrend"></canvas></div>
+        <div class="flex gap-2 mt-2" id="trendFilters" style="display:none;">
+          <select id="trendProductFilter" class="px-3 py-1 border border-slate-200 rounded-lg text-xs"></select>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-categories" class="tab-content hidden">
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <div class="flex items-start justify-between mb-4">
+        <div>
+          <h2 class="text-lg font-bold text-slate-900">Kategoriler ve Vergi Oranları</h2>
+          <p class="text-sm text-slate-500 mt-1">Vergi oranları değiştiğinde buradan güncelleyin. Tüm ürünler otomatik yeniden hesaplanır.</p>
+        </div>
+        <button id="addCategoryBtn" class="pill-btn bg-emerald-600 text-white hover:bg-emerald-700">+ Yeni Kategori</button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr>
+              <th class="px-3 py-2 text-left">Kategori</th>
+              <th class="px-3 py-2 num">İlave Gümrük</th>
+              <th class="px-3 py-2 num">Gümrük Vergisi</th>
+              <th class="px-3 py-2 num">ÖTV</th>
+              <th class="px-3 py-2 num">Ürün Sayısı</th>
+              <th class="px-3 py-2"></th>
+            </tr>
+          </thead>
+          <tbody id="categoryTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="tab-settings" class="tab-content hidden">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <h2 class="text-lg font-bold text-slate-900 mb-1">Döviz Kurları</h2>
+        <p class="text-sm text-slate-500 mb-4">TCMB "Döviz Satış" kuru otomatik çekiliyor. Manuel kullanmak için aşağıdan değiştir.</p>
+        <div class="space-y-3">
+          <div>
+            <label class="text-sm font-medium text-slate-700">Kur Kaynağı</label>
+            <select id="rateSource" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+              <option value="auto">Otomatik (TCMB canlı)</option>
+              <option value="manual">Manuel</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <label class="text-sm font-medium text-slate-700">USD/TRY</label>
+              <input type="number" step="0.0001" id="manualUSD" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+            </div>
+            <div>
+              <label class="text-sm font-medium text-slate-700">EUR/TRY</label>
+              <input type="number" step="0.0001" id="manualEUR" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+            </div>
+          </div>
+          <p class="text-xs text-slate-500">TCMB resmi "Döviz Satış" kuru today.xml feed'inden çekiliyor (CORS proxy ile). Hafta sonu / tatil günlerinde son iş gününün kuru kullanılır. TCMB erişilemezse Frankfurter API'ye düşülür. Phase 2'de doğrudan backend'den, proxy olmadan çekilecek.</p>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+        <h2 class="text-lg font-bold text-slate-900 mb-1">İş Kuralları</h2>
+        <p class="text-sm text-slate-500 mb-4">Fiyatlandırma ve KDV ayarları.</p>
+        <div class="space-y-3">
+          <div>
+            <label class="text-sm font-medium text-slate-700">Minimum Kar Marjı (%)</label>
+            <input type="number" step="1" id="minMarkup" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+            <p class="text-xs text-slate-500 mt-1">Liste/Belirlenen fiyat bu marjın altına düşemez (uyarı).</p>
+          </div>
+          <div class="flex items-center gap-3 pt-2">
+            <input type="checkbox" id="kdvEnabled" class="w-4 h-4">
+            <label for="kdvEnabled" class="text-sm font-medium text-slate-700">KDV'yi maliyete dahil et</label>
+          </div>
+          <div>
+            <label class="text-sm font-medium text-slate-700">KDV Oranı (%)</label>
+            <input type="number" step="1" id="kdvRate" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+            <p class="text-xs text-slate-500 mt-1">KDV mükellefiysen kapalı bırak.</p>
+          </div>
+          <div class="grid grid-cols-2 gap-3 pt-2">
+            <div>
+              <label class="text-sm font-medium text-slate-700">Varsayılan Navlum (%)</label>
+              <input type="number" step="0.1" id="defaultFreight" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+            </div>
+            <div>
+              <label class="text-sm font-medium text-slate-700">Varsayılan Gümrük Masrafı (%)</label>
+              <input type="number" step="0.1" id="defaultCustomsExp" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 lg:col-span-2">
+        <h2 class="text-lg font-bold text-slate-900 mb-1">Veri Yönetimi</h2>
+        <p class="text-sm text-slate-500 mb-4">Yedek al, içe aktar, sıfırla. (Phase 2'de buluta otomatik.)</p>
+        <div class="flex flex-wrap gap-2">
+          <button id="exportAllBtn" class="pill-btn bg-slate-900 text-white hover:bg-slate-700">⬇ Tüm Veriyi Yedekle (JSON)</button>
+          <button id="importAllBtn" class="pill-btn bg-white border border-slate-200 hover:bg-slate-50">⬆ Yedekten Yükle</button>
+          <input type="file" id="importFile" class="hidden" accept=".json">
+          <button id="resetBtn" class="pill-btn bg-red-50 text-red-700 hover:bg-red-100 border border-red-200">↺ Excel'den Sıfırla</button>
+        </div>
+        <p class="text-xs text-slate-500 mt-3" id="storageStatus"></p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== SATIŞ TAKİBİ SEKMESİ ===== -->
+  <section id="tab-sales" class="tab-content hidden">
+
+    <!-- Özet kartlar -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="salesSummaryCards"></div>
+
+    <!-- Giriş paneli -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+
+      <!-- Manuel satış girişi -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="font-bold text-slate-900 mb-4">Satış Girişi</h3>
+        <div class="space-y-3">
+          <div>
+            <label class="text-xs font-medium text-slate-600">Ürün</label>
+            <select id="s_product" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"></select>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-xs font-medium text-slate-600">Ay</label>
+              <select id="s_month" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                <option value="1">Ocak</option><option value="2">Şubat</option><option value="3">Mart</option>
+                <option value="4">Nisan</option><option value="5">Mayıs</option><option value="6">Haziran</option>
+                <option value="7">Temmuz</option><option value="8">Ağustos</option><option value="9">Eylül</option>
+                <option value="10">Ekim</option><option value="11">Kasım</option><option value="12">Aralık</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600">Yıl</label>
+              <input type="number" id="s_year" value="2026" min="2020" max="2030" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+            </div>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600">Satış Adedi</label>
+            <input type="number" id="s_qty" min="0" placeholder="0" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600">Satış Tutarı (TL)</label>
+            <input type="number" id="s_revenue" min="0" placeholder="0,00" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+          </div>
+          <div id="s_cost_info" class="hidden bg-slate-50 rounded-lg p-3 text-xs text-slate-600 space-y-1"></div>
+          <button onclick="saveSalesEntry()" class="w-full py-2 bg-slate-900 text-white rounded-lg text-sm font-semibold hover:bg-slate-700 transition-colors">Kaydet</button>
+        </div>
+      </div>
+
+      <!-- CSV Import -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="font-bold text-slate-900 mb-1">Mikro Jump'tan Aktar</h3>
+        <p class="text-xs text-slate-500 mb-4">CSV formatında: Ürün Adı, Ay, Yıl, Adet, Tutar (TL)</p>
+        <div class="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center mb-3">
+          <div class="text-3xl mb-2">📂</div>
+          <p class="text-sm text-slate-600 mb-2">CSV dosyasını sürükle veya seç</p>
+          <input type="file" id="salesCsvInput" accept=".csv" class="hidden">
+          <button onclick="document.getElementById('salesCsvInput').click()" class="pill-btn bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs">Dosya Seç</button>
+        </div>
+        <div id="csvPreview" class="hidden">
+          <p class="text-xs font-medium text-slate-700 mb-2" id="csvPreviewTitle"></p>
+          <div id="csvPreviewTable" class="overflow-x-auto text-xs max-h-32 overflow-y-auto"></div>
+          <button onclick="importSalesCsv()" class="mt-3 w-full py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700">İçe Aktar</button>
+        </div>
+        <div class="mt-4 pt-4 border-t border-slate-100">
+          <p class="text-xs text-slate-500 mb-2">Örnek CSV şablonu:</p>
+          <button onclick="downloadSalesCsvTemplate()" class="pill-btn bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs">⬇ Şablon İndir</button>
+        </div>
+      </div>
+
+      <!-- Filtreler + grafik tipi -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="font-bold text-slate-900 mb-4">Filtreler</h3>
+        <div class="space-y-3">
+          <div>
+            <label class="text-xs font-medium text-slate-600">Ürün Filtresi</label>
+            <select id="s_filter_product" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+              <option value="">Tüm Ürünler</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600">Yıl</label>
+            <select id="s_filter_year" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"></select>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600">Görünüm</label>
+            <select id="s_chart_type" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+              <option value="revenue">Aylık Ciro (TL)</option>
+              <option value="qty">Aylık Satış Adedi</option>
+              <option value="margin">Aylık Kar Marjı (%)</option>
+            </select>
+          </div>
+          <button onclick="renderSalesTab()" class="w-full py-2 bg-slate-100 text-slate-800 rounded-lg text-sm font-semibold hover:bg-slate-200">Uygula</button>
+          <button onclick="exportSalesExcel()" class="w-full py-2 bg-green-50 text-green-800 border border-green-200 rounded-lg text-sm font-semibold hover:bg-green-100">⬇ Excel'e Aktar</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Grafik -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-6">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-slate-900" id="salesChartTitle">Aylık Satış Grafiği</h3>
+      </div>
+      <canvas id="salesChart" height="80"></canvas>
+    </div>
+
+    <!-- En çok satanlar + stok devir -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="font-bold text-slate-900 mb-4">🏆 En Çok Satan Ürünler</h3>
+        <div id="topSellersList"></div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="font-bold text-slate-900 mb-4">🔄 Stok Devir Hızı</h3>
+        <p class="text-xs text-slate-500 mb-3">Mevcut stok / aylık ort. satış = kaç aylık stok</p>
+        <div id="stockTurnoverList"></div>
+      </div>
+    </div>
+
+    <!-- Satış kayıtları tablosu -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="font-bold text-slate-900">Satış Kayıtları</h3>
+        <button onclick="clearAllSales()" class="pill-btn bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 text-xs">Tümünü Sil</button>
+      </div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-slate-50">
+            <tr>
+              <th class="px-3 py-2 text-left">Ürün</th>
+              <th class="px-3 py-2 text-left">Dönem</th>
+              <th class="px-3 py-2 num">Adet</th>
+              <th class="px-3 py-2 num">Ciro (TL)</th>
+              <th class="px-3 py-2 num">Ort. Satış Fiyatı</th>
+              <th class="px-3 py-2 num">Maliyet</th>
+              <th class="px-3 py-2 num">Kar %</th>
+              <th class="px-3 py-2"></th>
+            </tr>
+          </thead>
+          <tbody id="salesTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </section>
+  <!-- ===== / SATIŞ TAKİBİ SEKMESİ ===== -->
+
+  <section id="tab-history" class="tab-content hidden">
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
+      <h2 class="text-lg font-bold text-slate-900 mb-1">Fiyat Değişiklik Geçmişi</h2>
+      <p class="text-sm text-slate-500 mb-4">Her değişiklik otomatik loglanır.</p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr>
+              <th class="px-3 py-2 text-left">Tarih</th>
+              <th class="px-3 py-2 text-left">Ürün</th>
+              <th class="px-3 py-2 text-left">Alan</th>
+              <th class="px-3 py-2 num">Eski Değer</th>
+              <th class="px-3 py-2 num">Yeni Değer</th>
+              <th class="px-3 py-2 text-left">Kullanıcı</th>
+            </tr>
+          </thead>
+          <tbody id="historyTbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Product modal -->
+<div id="productModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+    <div class="p-6 border-b border-slate-200 flex items-center justify-between">
+      <h3 class="text-lg font-bold text-slate-900" id="modalTitle">Yeni Ürün</h3>
+      <button class="closeModal text-slate-400 hover:text-slate-900 text-2xl leading-none">×</button>
+    </div>
+    <div class="p-6 space-y-4">
+      <div>
+        <label class="text-sm font-medium text-slate-700">Ürün Adı</label>
+        <input type="text" id="m_name" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-sm font-medium text-slate-700">Grup</label>
+          <select id="m_group" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"></select>
+        </div>
+        <div>
+          <label class="text-sm font-medium text-slate-700">Alış Para Birimi</label>
+          <select id="m_currency" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+            <option value="TL">TL</option>
+          </select>
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-sm font-medium text-slate-700">Alış Fiyatı</label>
+          <input type="number" step="0.01" id="m_price" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+        </div>
+        <div>
+          <label class="text-sm font-medium text-slate-700">Alış Kuru (opsiyonel)</label>
+          <input type="number" step="0.0001" id="m_rate" placeholder="otomatik güncel kur" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+        </div>
+      </div>
+      <div class="grid grid-cols-2 gap-3">
+        <div>
+          <label class="text-sm font-medium text-slate-700">Navlum %</label>
+          <input type="number" step="0.1" id="m_freight" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+        </div>
+        <div>
+          <label class="text-sm font-medium text-slate-700">Gümrük Masrafı %</label>
+          <input type="number" step="0.1" id="m_customsExp" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+        </div>
+      </div>
+
+      <div class="bg-amber-50 border border-amber-200 rounded-lg p-3">
+        <div class="flex items-center gap-2 mb-2">
+          <input type="checkbox" id="m_otv_override_enabled" class="rounded">
+          <label for="m_otv_override_enabled" class="text-sm font-semibold text-amber-900 cursor-pointer">Bu ürün için özel ÖTV oranı (istisna)</label>
+        </div>
+        <div id="m_otv_override_row" class="hidden flex items-center gap-2">
+          <input type="number" step="0.1" min="0" id="m_otv_override" placeholder="örn. 6.7" class="w-32 px-3 py-2 border border-amber-300 rounded-lg text-sm num bg-white">
+          <span class="text-sm text-amber-700">% — Kategori oranını geçersiz kılar</span>
+        </div>
+        <p class="text-xs text-amber-600 mt-1">İşaretli değilse kategori ÖTV oranı kullanılır.</p>
+      </div>
+
+      <hr class="border-slate-200">
+
+      <div class="bg-blue-50 border border-blue-100 rounded-lg p-3">
+        <div class="text-xs font-semibold text-blue-900 mb-2">📋 Liste Fiyatı (Referans — %30 toptancı fiyatımız)</div>
+        <div class="grid grid-cols-3 gap-2">
+          <input type="number" step="0.01" id="m_listPrice" placeholder="örn. 130" class="col-span-2 px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+          <select id="m_listCurrency" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
+            <option value="TL">TL</option>
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+          </select>
+        </div>
+        <p class="text-xs text-slate-500 mt-2">Resmi fiyat listemizde olan, toptancılara verdiğimiz (%30 indirimli) fiyat. Sabit referans.</p>
+      </div>
+
+      <div class="bg-emerald-50 border border-emerald-100 rounded-lg p-3">
+        <div class="text-xs font-semibold text-emerald-900 mb-2">✏️ Belirlenen Satış Fiyatı (Yeni / aktif olarak girilen)</div>
+        <div class="grid grid-cols-3 gap-2">
+          <input type="number" step="0.01" id="m_setPrice" placeholder="yeni fiyat" class="col-span-2 px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+          <select id="m_setCurrency" class="px-3 py-2 border border-slate-200 rounded-lg text-sm">
+            <option value="TL">TL</option>
+            <option value="USD">USD</option>
+            <option value="EUR">EUR</option>
+          </select>
+        </div>
+        <p class="text-xs mt-2" id="m_setHint"></p>
+      </div>
+
+      <hr class="border-slate-200">
+
+      <div class="bg-purple-50 border border-purple-100 rounded-lg p-3">
+        <div class="text-xs font-semibold text-purple-900 mb-2">📦 Stok & Satış Tahmini</div>
+        <div class="grid grid-cols-2 gap-3">
+          <div>
+            <label class="text-xs text-slate-600">Mevcut Stok (adet)</label>
+            <input type="number" step="1" min="0" id="m_stockQty" placeholder="0" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+          </div>
+          <div>
+            <label class="text-xs text-slate-600">Aylık Satış Tahmini (adet)</label>
+            <input type="number" step="1" min="0" id="m_monthlySales" placeholder="0" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+          </div>
+        </div>
+        <p class="text-xs text-slate-500 mt-2">Bu alanlar Analitik sekmesinde sermaye, aylık ve yıllık kar projeksiyonu için kullanılır.</p>
+        <p class="text-xs mt-1" id="m_stockHint"></p>
+      </div>
+
+      <div id="m_breakdown" class="bg-slate-50 rounded-lg p-4 text-sm space-y-1"></div>
+    </div>
+    <div class="p-6 border-t border-slate-200 flex justify-end gap-2">
+      <button class="closeModal pill-btn bg-white border border-slate-200 hover:bg-slate-50">İptal</button>
+      <button id="saveProductBtn" class="pill-btn bg-emerald-600 text-white hover:bg-emerald-700">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- Category modal -->
+<div id="categoryModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+    <div class="p-6 border-b border-slate-200 flex items-center justify-between">
+      <h3 class="text-lg font-bold text-slate-900" id="catModalTitle">Kategori Düzenle</h3>
+      <button class="closeCatModal text-slate-400 hover:text-slate-900 text-2xl leading-none">×</button>
+    </div>
+    <div class="p-6 space-y-4">
+      <div>
+        <label class="text-sm font-medium text-slate-700">Kategori Adı</label>
+        <input type="text" id="c_name" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+      </div>
+      <div class="grid grid-cols-3 gap-3">
+        <div>
+          <label class="text-sm font-medium text-slate-700">İlave Gümrük %</label>
+          <input type="number" step="0.1" id="c_addCustoms" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+        </div>
+        <div>
+          <label class="text-sm font-medium text-slate-700">Gümrük %</label>
+          <input type="number" step="0.1" id="c_customs" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+        </div>
+        <div>
+          <label class="text-sm font-medium text-slate-700">ÖTV %</label>
+          <input type="number" step="0.1" id="c_otv" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+        </div>
+      </div>
+    </div>
+    <div class="p-6 border-t border-slate-200 flex justify-end gap-2">
+      <button class="closeCatModal pill-btn bg-white border border-slate-200 hover:bg-slate-50">İptal</button>
+      <button id="saveCategoryBtn" class="pill-btn bg-emerald-600 text-white hover:bg-emerald-700">Kaydet</button>
+    </div>
+  </div>
+</div>
+
+<!-- Confirm modal -->
+<div id="confirmModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+    <div class="p-6">
+      <h3 class="text-lg font-bold text-slate-900 mb-2" id="confirmTitle">Onayla</h3>
+      <p class="text-sm text-slate-600" id="confirmMessage"></p>
+    </div>
+    <div class="p-6 pt-0 flex justify-end gap-2">
+      <button id="confirmNo" class="pill-btn bg-white border border-slate-200 hover:bg-slate-50">İptal</button>
+      <button id="confirmYes" class="pill-btn bg-red-600 text-white hover:bg-red-700">Devam Et</button>
+    </div>
+  </div>
+</div>
+
+</div><!-- /mainApp -->
+
+<script>
+// ===== SUPABASE BAĞLANTISI =====
+const SUPABASE_URL = 'https://gsbexiycflrehhohuzvm.supabase.co';
+const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImdzYmV4aXljZmxyZWhob2h1enZtIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzg2NzUyMzYsImV4cCI6MjA5NDI1MTIzNn0.SQzF3HnNCYi36T5XdfadWdLhgilwXynxY8dfAdJK5Rg';
+const { createClient } = supabase;
+const sb = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+// ===== AUTH FONKSİYONLARI =====
+async function doLogin() {
+  const email = document.getElementById('loginEmail').value.trim();
+  const password = document.getElementById('loginPassword').value;
+  const errEl = document.getElementById('loginError');
+  const loadEl = document.getElementById('loginLoading');
+  const btn = document.getElementById('loginBtn');
+
+  errEl.classList.add('hidden');
+  loadEl.classList.remove('hidden');
+  btn.disabled = true;
+
+  const { data, error } = await sb.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    errEl.textContent = 'Giriş başarısız: ' + (error.message === 'Invalid login credentials' ? 'E-posta veya şifre hatalı.' : error.message);
+    errEl.classList.remove('hidden');
+    loadEl.classList.add('hidden');
+    btn.disabled = false;
+    return;
+  }
+
+  await onLoginSuccess(data.user);
+}
+
+async function doLogout() {
+  await sb.auth.signOut();
+  document.getElementById('mainApp').classList.add('hidden');
+  document.getElementById('loginScreen').classList.remove('hidden');
+  document.getElementById('loginPassword').value = '';
+}
+
+async function onLoginSuccess(user) {
+  document.getElementById('loginScreen').classList.add('hidden');
+  document.getElementById('mainApp').classList.remove('hidden');
+  document.getElementById('userEmailDisplay').textContent = user.email;
+  await loadFromSupabase();
+  renderAll();
+  fetchRates();
+}
+
+// Enter tuşuyla giriş
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('loginPassword').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') doLogin();
+  });
+  document.getElementById('loginEmail').addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') document.getElementById('loginPassword').focus();
+  });
+});
+
+// Sayfa açılırken zaten giriş yapılmış mı kontrol et
+sb.auth.getSession().then(({ data: { session } }) => {
+  if (session) {
+    onLoginSuccess(session.user);
+  }
+});
+
+const DEFAULT_CATEGORIES = [
+  { id: 'tiras_makinesi', name: 'Tıraş Makinesi', additional_customs: 0.20, customs: 0.027, otv: 0 },
+  { id: 'duzlestirici_masa', name: 'Düzleştirici & Maşa', additional_customs: 0.30, customs: 0.027, otv: 0.067 },
+  { id: 'firca', name: 'Fırça', additional_customs: 0.23, customs: 0.037, otv: 0 },
+  { id: 'makas', name: 'Makas', additional_customs: 0, customs: 0.042, otv: 0 },
+  { id: 'pens', name: 'Pens', additional_customs: 0.25, customs: 0.03, otv: 0.067 },
+  { id: 'jilet', name: 'Jilet & Ustura', additional_customs: 0, customs: 0.025, otv: 0 },
+  { id: 'diger', name: 'Diğer', additional_customs: 0, customs: 0, otv: 0 }
+];
+
+const DEFAULT_SETTINGS = {
+  rate_source: 'auto',
+  manual_usd: 44.0,
+  manual_eur: 52.0,
+  current_usd: 44.0,
+  current_eur: 52.0,
+  rates_date: '',
+  rates_source_used: '',
+  min_markup_pct: 50,
+  kdv_enabled: false,
+  kdv_rate: 20,
+  default_freight: 2,
+  default_customs_exp: 2,
+};
+
+const STORAGE_KEY = 'maliyet_yonetim_v1';
+let storageAvailable = false;
+try { localStorage.setItem('_t', '1'); localStorage.removeItem('_t'); storageAvailable = true; } catch(e) { storageAvailable = false; }
+
+let state = {
+  products: [],
+  categories: DEFAULT_CATEGORIES,
+  settings: DEFAULT_SETTINGS,
+  history: [],
+  sales: [],
+  filter: { search: '', group: '', warning: 'all' },
+  currentTab: 'products',
+  editingProductIndex: null,
+  editingCategoryIndex: null,
+};
+
+const SEED_PRODUCTS = [{"name": "LİNEAR X", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 35.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 130.0, "list_price_currency": "USD", "set_price": 5590.0, "set_price_currency": "TL"}, {"name": "LİNEAR T", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 35.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 123.72, "list_price_currency": "USD", "set_price": 5320.0, "set_price_currency": "TL"}, {"name": "MONSTER X", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 29.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 124.42, "list_price_currency": "USD", "set_price": 5350.0, "set_price_currency": "TL"}, {"name": "MONSTER T", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 27.3, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 111.63, "list_price_currency": "USD", "set_price": 4800.0, "set_price_currency": "TL"}, {"name": "MONSTER S", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 29.9, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 114.07, "list_price_currency": "USD", "set_price": 4905.0, "set_price_currency": "TL"}, {"name": "HAWK X", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 16.5, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 77.09, "list_price_currency": "USD", "set_price": 3315.0, "set_price_currency": "TL"}, {"name": "HAWK T", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 14.5, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 69.6, "list_price_currency": "USD", "set_price": 2993.0, "set_price_currency": "TL"}, {"name": "HAWK SP", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 14.5, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 53.02, "list_price_currency": "USD", "set_price": 2280.0, "set_price_currency": "TL"}, {"name": "SHAVPER", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 38.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 131.88, "list_price_currency": "USD", "set_price": 5671.0, "set_price_currency": "TL"}, {"name": "PRO STOCK X", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 35.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 126.51, "list_price_currency": "USD", "set_price": 5440.0, "set_price_currency": "TL"}, {"name": "SUPER STOCK T", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 35.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 120.58, "list_price_currency": "USD", "set_price": 5185.0, "set_price_currency": "TL"}, {"name": "SPEED", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 19.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 83.72, "list_price_currency": "USD", "set_price": 3600.0, "set_price_currency": "TL"}, {"name": "ZERO", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 18.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 79.07, "list_price_currency": "USD", "set_price": 3400.0, "set_price_currency": "TL"}, {"name": "K2", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 15.7, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 56.13, "list_price_currency": "USD", "set_price": 2413.61, "set_price_currency": "TL"}, {"name": "K2 EKRANLI", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 16.5, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 59.55, "list_price_currency": "USD", "set_price": 2560.8, "set_price_currency": "TL"}, {"name": "HUNTER", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 40.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 148.84, "list_price_currency": "USD", "set_price": 6400.0, "set_price_currency": "TL"}, {"name": "SPACE", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 22.3, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 87.21, "list_price_currency": "USD", "set_price": 3750.0, "set_price_currency": "TL"}, {"name": "SHARK X", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 15.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 54.88, "list_price_currency": "USD", "set_price": 2360.0, "set_price_currency": "TL"}, {"name": "SHARK T", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 12.2, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 50.0, "list_price_currency": "USD", "set_price": 2150.0, "set_price_currency": "TL"}, {"name": "GLADİATÖR X", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 24.6, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 95.35, "list_price_currency": "USD", "set_price": 4100.0, "set_price_currency": "TL"}, {"name": "GLADİATÖR T", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 21.7, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 90.7, "list_price_currency": "USD", "set_price": 3900.0, "set_price_currency": "TL"}, {"name": "MRD HC 90", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 50.4, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 120.93, "list_price_currency": "USD", "set_price": 5200.0, "set_price_currency": "TL"}, {"name": "MRD GMT 90", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 35.6, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 106.98, "list_price_currency": "USD", "set_price": 4600.0, "set_price_currency": "TL"}, {"name": "MRD PRO X", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 60.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 144.19, "list_price_currency": "USD", "set_price": 6200.0, "set_price_currency": "TL"}, {"name": "MRD HC - 3969 ST (X)", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 46.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 118.6, "list_price_currency": "USD", "set_price": 5100.0, "set_price_currency": "TL"}, {"name": "MRD GMT - 3969 ST", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 32.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 84.88, "list_price_currency": "USD", "set_price": 3650.0, "set_price_currency": "TL"}, {"name": "MRD HC - 3969 Uranüs (X) SADECE SİYAH", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 27.2, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 75.58, "list_price_currency": "USD", "set_price": 3250.0, "set_price_currency": "TL"}, {"name": "MRD HC-3969-2+GMT-188-2 (SADECE TURKUAZ)", "group": "tiras_makinesi", "purchase_currency": "USD", "purchase_price": 36.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 97.67, "list_price_currency": "USD", "set_price": 4200.0, "set_price_currency": "TL"}, {"name": "HD 205B DÜZLEŞTİRİCİ (BUHARLI)", "group": "duzlestirici_masa", "purchase_currency": "USD", "purchase_price": 21.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 65.86, "list_price_currency": "USD", "set_price": 2832.0, "set_price_currency": "TL"}, {"name": "HD210I DÜZLEŞTİRİCİ (İYONLU)", "group": "duzlestirici_masa", "purchase_currency": "USD", "purchase_price": 14.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 44.19, "list_price_currency": "USD", "set_price": 1900.0, "set_price_currency": "TL"}, {"name": "H118 DÜZLEŞTİRİCİ", "group": "duzlestirici_masa", "purchase_currency": "USD", "purchase_price": 7.5, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 30.23, "list_price_currency": "USD", "set_price": 1108.0, "set_price_currency": "TL"}, {"name": "HEC 291 SAÇ MAŞASI", "group": "duzlestirici_masa", "purchase_currency": "USD", "purchase_price": 7.5, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 30.23, "list_price_currency": "USD", "set_price": 1108.0, "set_price_currency": "TL"}, {"name": "LM219 SAÇ MAŞASI", "group": "duzlestirici_masa", "purchase_currency": "USD", "purchase_price": 11.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 30.23, "list_price_currency": "USD", "set_price": 1300.0, "set_price_currency": "TL"}, {"name": "217M -25 SAÇ MAŞASI", "group": "duzlestirici_masa", "purchase_currency": "USD", "purchase_price": 14.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 31.23, "list_price_currency": "USD"}, {"name": "UV602 (WAG MAŞA)", "group": "duzlestirici_masa", "purchase_currency": "USD", "purchase_price": 10.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 29.07, "list_price_currency": "USD", "set_price": 1250.0, "set_price_currency": "TL"}, {"name": "STERİLİZASYON KUTUSU", "group": "duzlestirici_masa", "purchase_currency": "USD", "purchase_price": 12.2, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 33.53, "list_price_currency": "USD", "set_price": 1442.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI 202 KLASİK 20NB", "group": "firca", "purchase_currency": "USD", "purchase_price": 1.7, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 5.3, "list_price_currency": "USD", "set_price": 228.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI 202 KLASİK 40NB", "group": "firca", "purchase_currency": "USD", "purchase_price": 1.85, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 5.74, "list_price_currency": "USD", "set_price": 247.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI 202 KLASİK 60NB", "group": "firca", "purchase_currency": "USD", "purchase_price": 2.05, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 6.35, "list_price_currency": "USD", "set_price": 273.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI 202 KLASİK 70NB", "group": "firca", "purchase_currency": "USD", "purchase_price": 2.3, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 7.12, "list_price_currency": "USD", "set_price": 306.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI 202 KLASİK 80NB", "group": "firca", "purchase_currency": "USD", "purchase_price": 2.65, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 8.19, "list_price_currency": "USD", "set_price": 352.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI 202 KLASİK 90NB", "group": "firca", "purchase_currency": "USD", "purchase_price": 3.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 9.14, "list_price_currency": "USD", "set_price": 393.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI DİAMOND 20NB", "group": "firca", "purchase_currency": "USD", "purchase_price": 1.85, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 5.3, "list_price_currency": "USD", "set_price": 228.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI DİAMOND 40NB", "group": "firca", "purchase_currency": "USD", "purchase_price": 2.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 5.74, "list_price_currency": "USD", "set_price": 247.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI DİAMOND 60NB", "group": "firca", "purchase_currency": "USD", "purchase_price": 2.2, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 6.35, "list_price_currency": "USD", "set_price": 273.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI DİAMOND 70NB", "group": "firca", "purchase_currency": "USD", "purchase_price": 2.45, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 7.12, "list_price_currency": "USD", "set_price": 306.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI DİAMOND 80NB", "group": "firca", "purchase_currency": "USD", "purchase_price": 2.8, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 8.19, "list_price_currency": "USD", "set_price": 352.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI DİAMOND 90NB", "group": "firca", "purchase_currency": "USD", "purchase_price": 3.25, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 9.14, "list_price_currency": "USD", "set_price": 393.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ AÇMA FIRÇASI GREEN", "group": "firca", "purchase_currency": "USD", "purchase_price": 3.2, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 9.16, "list_price_currency": "USD", "set_price": 394.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI GREEN 20NB", "group": "firca", "purchase_currency": "USD", "purchase_price": 1.75, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 5.28, "list_price_currency": "USD", "set_price": 227.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI GREEN 40NB", "group": "firca", "purchase_currency": "USD", "purchase_price": 1.9, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 5.72, "list_price_currency": "USD", "set_price": 246.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI GREEN 60NB", "group": "firca", "purchase_currency": "USD", "purchase_price": 2.1, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 6.35, "list_price_currency": "USD", "set_price": 273.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI GREEN 70NB", "group": "firca", "purchase_currency": "USD", "purchase_price": 2.35, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 7.14, "list_price_currency": "USD", "set_price": 307.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI GREEN 80NB", "group": "firca", "purchase_currency": "USD", "purchase_price": 2.7, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 8.19, "list_price_currency": "USD", "set_price": 352.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI GREEN 90NB", "group": "firca", "purchase_currency": "USD", "purchase_price": 3.1, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 9.16, "list_price_currency": "USD", "set_price": 394.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI POİNT 20NB", "group": "firca", "purchase_currency": "USD", "purchase_price": 1.75, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 5.28, "list_price_currency": "USD", "set_price": 227.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI POİNT 40NB", "group": "firca", "purchase_currency": "USD", "purchase_price": 1.9, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 5.72, "list_price_currency": "USD", "set_price": 246.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI POİNT 60NB", "group": "firca", "purchase_currency": "USD", "purchase_price": 2.1, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 6.35, "list_price_currency": "USD", "set_price": 273.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI POİNT 70NB", "group": "firca", "purchase_currency": "USD", "purchase_price": 2.35, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 7.14, "list_price_currency": "USD", "set_price": 307.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI POİNT 80NB", "group": "firca", "purchase_currency": "USD", "purchase_price": 3.04, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 8.19, "list_price_currency": "USD", "set_price": 352.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI POİNT 90NB", "group": "firca", "purchase_currency": "USD", "purchase_price": 3.19, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 9.16, "list_price_currency": "USD", "set_price": 394.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI GREEN / DİAMOND 40NB (LARGE)", "group": "firca", "purchase_currency": "USD", "purchase_price": 2.25, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 6.65, "list_price_currency": "USD", "set_price": 286.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI GREEN / DİAMOND 60NB (LARGE)", "group": "firca", "purchase_currency": "USD", "purchase_price": 2.45, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 7.44, "list_price_currency": "USD", "set_price": 320.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI GREEN / DİAMOND 70NB (LARGE)", "group": "firca", "purchase_currency": "USD", "purchase_price": 2.75, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 8.6, "list_price_currency": "USD", "set_price": 370.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI GREEN / DİAMOND 80NB (LARGE)", "group": "firca", "purchase_currency": "USD", "purchase_price": 3.25, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 9.58, "list_price_currency": "USD", "set_price": 412.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ FIRÇASI 202 / POİNT SET", "group": "firca", "purchase_currency": "USD", "purchase_price": 18.4, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 52.79, "list_price_currency": "USD", "set_price": 2270.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ AÇMA FIRÇASI 360VN (TOPLU)", "group": "firca", "purchase_currency": "USD", "purchase_price": 2.35, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 8.19, "list_price_currency": "USD", "set_price": 352.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ AÇMA FIRÇASI 380VN (TOPLU)", "group": "firca", "purchase_currency": "USD", "purchase_price": 3.2, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 9.16, "list_price_currency": "USD", "set_price": 394.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ AÇMA FIRÇASI 140HV (ÇOK TELLİ)", "group": "firca", "purchase_currency": "USD", "purchase_price": 2.25, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 7.14, "list_price_currency": "USD", "set_price": 307.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ AÇMA FIRÇASI 160HV (ÇOK TELLİ)", "group": "firca", "purchase_currency": "USD", "purchase_price": 2.65, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 8.19, "list_price_currency": "USD", "set_price": 352.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ AÇMA FIRÇASI 170HV (ÇOK TELLİ)", "group": "firca", "purchase_currency": "USD", "purchase_price": 2.65, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 8.19, "list_price_currency": "USD", "set_price": 352.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ AÇMA FIRÇASI 180HV (ÇOK TELLİ)", "group": "firca", "purchase_currency": "USD", "purchase_price": 3.15, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 9.16, "list_price_currency": "USD", "set_price": 394.0, "set_price_currency": "TL"}, {"name": "VENT SAÇ AÇMA TARAK SETİ", "group": "firca", "purchase_currency": "USD", "purchase_price": 18.4, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 62.33, "list_price_currency": "USD", "set_price": 2680.0, "set_price_currency": "TL"}, {"name": "HEC 210 – 66 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 21.58, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 76.0, "list_price_currency": "USD", "set_price": 76.0, "set_price_currency": "TL"}, {"name": "HEC 211 – 60 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 20.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 74.0, "list_price_currency": "USD", "set_price": 74.0, "set_price_currency": "TL"}, {"name": "HEC 212 – 60 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 20.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 74.0, "list_price_currency": "USD", "set_price": 74.0, "set_price_currency": "TL"}, {"name": "HEC 212 – 65 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 20.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 74.0, "list_price_currency": "USD", "set_price": 74.0, "set_price_currency": "TL"}, {"name": "HEC 213 – 60 OS BLACK", "group": "makas", "purchase_currency": "USD", "purchase_price": 21.85, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 76.0, "list_price_currency": "USD", "set_price": 76.0, "set_price_currency": "TL"}, {"name": "HEC 213 – 65 OS BLACK", "group": "makas", "purchase_currency": "USD", "purchase_price": 21.85, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 76.0, "list_price_currency": "USD", "set_price": 76.0, "set_price_currency": "TL"}, {"name": "HEC 214 – 60 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 20.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 74.0, "list_price_currency": "USD", "set_price": 74.0, "set_price_currency": "TL"}, {"name": "HEC 214 – 65 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 20.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 74.0, "list_price_currency": "USD", "set_price": 74.0, "set_price_currency": "TL"}, {"name": "HEC 215 – 60 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 23.7, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 83.0, "list_price_currency": "USD", "set_price": 83.0, "set_price_currency": "TL"}, {"name": "HEC 215 – 65 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 23.7, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 83.0, "list_price_currency": "USD", "set_price": 83.0, "set_price_currency": "TL"}, {"name": "HEC 216 – 60 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 23.7, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 83.0, "list_price_currency": "USD", "set_price": 83.0, "set_price_currency": "TL"}, {"name": "HEC 216 – 65 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 23.7, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 83.0, "list_price_currency": "USD", "set_price": 83.0, "set_price_currency": "TL"}, {"name": "HEC 217 – 70 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 21.85, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 78.0, "list_price_currency": "USD", "set_price": 78.0, "set_price_currency": "TL"}, {"name": "HEC 217 – 75 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 21.85, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 78.0, "list_price_currency": "USD", "set_price": 78.0, "set_price_currency": "TL"}, {"name": "HEC 218 – 65 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 21.85, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 78.0, "list_price_currency": "USD", "set_price": 78.0, "set_price_currency": "TL"}, {"name": "HEC 219 – 65 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 20.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 78.0, "list_price_currency": "USD", "set_price": 78.0, "set_price_currency": "TL"}, {"name": "HEC 220 – 60 OS T15", "group": "makas", "purchase_currency": "USD", "purchase_price": 20.93, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 74.0, "list_price_currency": "USD", "set_price": 74.0, "set_price_currency": "TL"}, {"name": "HEC 220 – 60 OS RT 15B", "group": "makas", "purchase_currency": "USD", "purchase_price": 20.93, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 74.0, "list_price_currency": "USD", "set_price": 74.0, "set_price_currency": "TL"}, {"name": "HEC 220 – 60 OS T25", "group": "makas", "purchase_currency": "USD", "purchase_price": 20.93, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 74.0, "list_price_currency": "USD", "set_price": 74.0, "set_price_currency": "TL"}, {"name": "HEC 220 – 60 OS RT 25B", "group": "makas", "purchase_currency": "USD", "purchase_price": 20.93, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 74.0, "list_price_currency": "USD", "set_price": 74.0, "set_price_currency": "TL"}, {"name": "HEC 220 – 60 OS T30", "group": "makas", "purchase_currency": "USD", "purchase_price": 20.93, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 74.0, "list_price_currency": "USD", "set_price": 74.0, "set_price_currency": "TL"}, {"name": "HEC 221 – 55 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 21.85, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 74.0, "list_price_currency": "USD", "set_price": 73.0, "set_price_currency": "TL"}, {"name": "HEC 221 – 60 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 21.85, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 74.0, "list_price_currency": "USD", "set_price": 74.0, "set_price_currency": "TL"}, {"name": "HEC 222 – 60 OSL", "group": "makas", "purchase_currency": "USD", "purchase_price": 21.85, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 77.0, "list_price_currency": "USD", "set_price": 77.0, "set_price_currency": "TL"}, {"name": "HEC 222 – 65 OSL", "group": "makas", "purchase_currency": "USD", "purchase_price": 21.85, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 77.0, "list_price_currency": "USD", "set_price": 77.0, "set_price_currency": "TL"}, {"name": "HEC 223 – 60 OS SLIM", "group": "makas", "purchase_currency": "USD", "purchase_price": 20.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 74.0, "list_price_currency": "USD", "set_price": 74.0, "set_price_currency": "TL"}, {"name": "HEC 225 – 55 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 23.7, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 78.0, "list_price_currency": "USD", "set_price": 78.0, "set_price_currency": "TL"}, {"name": "HEC 225 – 60 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 23.7, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 82.0, "list_price_currency": "USD", "set_price": 82.0, "set_price_currency": "TL"}, {"name": "HEC 225 – 60 OS RG", "group": "makas", "purchase_currency": "USD", "purchase_price": 24.63, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 85.0, "list_price_currency": "USD", "set_price": 85.0, "set_price_currency": "TL"}, {"name": "HEC 225 – 65 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 23.7, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 82.0, "list_price_currency": "USD", "set_price": 82.0, "set_price_currency": "TL"}, {"name": "HEC 225 – 65 OS RG", "group": "makas", "purchase_currency": "USD", "purchase_price": 24.63, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 85.0, "list_price_currency": "USD", "set_price": 85.0, "set_price_currency": "TL"}, {"name": "HEC 226 – 60 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 21.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 74.0, "list_price_currency": "USD", "set_price": 74.0, "set_price_currency": "TL"}, {"name": "HEC 227 – 60 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 20.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 74.0, "list_price_currency": "USD", "set_price": 74.0, "set_price_currency": "TL"}, {"name": "HEC 228 – 60 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 20.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 74.0, "list_price_currency": "USD", "set_price": 74.0, "set_price_currency": "TL"}, {"name": "HEC 230 – 60 OS T27", "group": "makas", "purchase_currency": "USD", "purchase_price": 23.7, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 86.0, "list_price_currency": "USD", "set_price": 84.0, "set_price_currency": "TL"}, {"name": "HEC 230 – 60 OS T40", "group": "makas", "purchase_currency": "USD", "purchase_price": 24.63, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 86.0, "list_price_currency": "USD", "set_price": 86.0, "set_price_currency": "TL"}, {"name": "HEC 230 – 60 OS T15", "group": "makas", "purchase_currency": "USD", "purchase_price": 23.7, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 78.0, "list_price_currency": "USD", "set_price": 84.0, "set_price_currency": "TL"}, {"name": "HEC 231 – 55 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 20.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 72.0, "list_price_currency": "USD", "set_price": 72.0, "set_price_currency": "TL"}, {"name": "HEC 231 – 60 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 20.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 74.0, "list_price_currency": "USD", "set_price": 74.0, "set_price_currency": "TL"}, {"name": "HEC 231 – 65 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 20.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 74.0, "list_price_currency": "USD", "set_price": 74.0, "set_price_currency": "TL"}, {"name": "HEC 232 – 60 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 23.7, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 86.0, "list_price_currency": "USD", "set_price": 86.0, "set_price_currency": "TL"}, {"name": "HEC 232 – 60 OS T27", "group": "makas", "purchase_currency": "USD", "purchase_price": 24.63, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 86.0, "list_price_currency": "USD", "set_price": 86.0, "set_price_currency": "TL"}, {"name": "HEC 233 – 60 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 20.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 84.0, "list_price_currency": "USD", "set_price": 74.0, "set_price_currency": "TL"}, {"name": "HEC 234–60 OS RT15B-L", "group": "makas", "purchase_currency": "USD", "purchase_price": 21.85, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 77.0, "list_price_currency": "USD", "set_price": 77.0, "set_price_currency": "TL"}, {"name": "HEC 234–60 OS RT30B-L", "group": "makas", "purchase_currency": "USD", "purchase_price": 21.85, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 76.05, "list_price_currency": "USD", "set_price": 77.0, "set_price_currency": "TL"}, {"name": "HEC 234–60 OSL", "group": "makas", "purchase_currency": "USD", "purchase_price": 20.93, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 77.0, "list_price_currency": "USD", "set_price": 77.0, "set_price_currency": "TL"}, {"name": "HEC 234–70 OSL", "group": "makas", "purchase_currency": "USD", "purchase_price": 22.78, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 92.0, "list_price_currency": "USD", "set_price": 92.0, "set_price_currency": "TL"}, {"name": "HEC 235 – 60 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 23.7, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 88.0, "list_price_currency": "USD", "set_price": 88.0, "set_price_currency": "TL"}, {"name": "HEC 235 – 65 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 23.7, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 88.0, "list_price_currency": "USD", "set_price": 88.0, "set_price_currency": "TL"}, {"name": "HEC 236 – 60 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 20.93, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 74.0, "list_price_currency": "USD", "set_price": 74.0, "set_price_currency": "TL"}, {"name": "HEC 237 – 60 OS (KAYDIRMA MAKASI)", "group": "makas", "purchase_currency": "USD", "purchase_price": 20.93, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 74.0, "list_price_currency": "USD", "set_price": 74.0, "set_price_currency": "TL"}, {"name": "HEC 237 – 60 OS T30B-L", "group": "makas", "purchase_currency": "USD", "purchase_price": 21.85, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 88.0, "list_price_currency": "USD", "set_price": 83.0, "set_price_currency": "TL"}, {"name": "HEC 238 – 65 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 20.93, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 74.0, "list_price_currency": "USD", "set_price": 74.0, "set_price_currency": "TL"}, {"name": "HEC 239 – 70 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 24.63, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 92.0, "list_price_currency": "USD", "set_price": 92.0, "set_price_currency": "TL"}, {"name": "HEC 240SW – 60 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 25.09, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 92.0, "list_price_currency": "USD", "set_price": 92.0, "set_price_currency": "TL"}, {"name": "HEC 241SLD – 60 OS (KAYDIRMA MAKASI)", "group": "makas", "purchase_currency": "USD", "purchase_price": 23.7, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 92.0, "list_price_currency": "USD", "set_price": 92.0, "set_price_currency": "TL"}, {"name": "HEC 242 – 65 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 23.7, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 88.0, "list_price_currency": "USD", "set_price": 88.0, "set_price_currency": "TL"}, {"name": "HEC 243 – 60 OS (KAYDIRMAZ DİŞLİ)", "group": "makas", "purchase_currency": "USD", "purchase_price": 24.63, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 92.0, "list_price_currency": "USD", "set_price": 92.0, "set_price_currency": "TL"}, {"name": "HEC 244  -  575 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 20.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 78.0, "list_price_currency": "USD", "set_price": 78.0, "set_price_currency": "TL"}, {"name": "HEC 245   - 575 – OS T40", "group": "makas", "purchase_currency": "USD", "purchase_price": 20.93, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 78.0, "list_price_currency": "USD", "set_price": 78.0, "set_price_currency": "TL"}, {"name": "HEC 246 – 60 OS T27", "group": "makas", "purchase_currency": "USD", "purchase_price": 20.93, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 88.0, "list_price_currency": "USD", "set_price": 88.0, "set_price_currency": "TL"}, {"name": "HEC UFO – 60 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 21.85, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 98.0, "list_price_currency": "USD", "set_price": 98.0, "set_price_currency": "TL"}, {"name": "HEC UFO – 60 OS T20", "group": "makas", "purchase_currency": "USD", "purchase_price": 23.7, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 98.0, "list_price_currency": "USD", "set_price": 98.0, "set_price_currency": "TL"}, {"name": "HEC EVEN", "group": "makas", "purchase_currency": "USD", "purchase_price": 21.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 74.0, "list_price_currency": "USD", "set_price": 74.0, "set_price_currency": "TL"}, {"name": "HEC WOOD RED", "group": "makas", "purchase_currency": "USD", "purchase_price": 33.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 118.0, "list_price_currency": "USD", "set_price": 118.0, "set_price_currency": "TL"}, {"name": "HEC WOOD GREEN", "group": "makas", "purchase_currency": "USD", "purchase_price": 33.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 118.0, "list_price_currency": "USD", "set_price": 118.0, "set_price_currency": "TL"}, {"name": "HEC DUAL", "group": "makas", "purchase_currency": "USD", "purchase_price": 23.7, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 88.0, "list_price_currency": "USD", "set_price": 88.0, "set_price_currency": "TL"}, {"name": "HEC FSB", "group": "makas", "purchase_currency": "USD", "purchase_price": 22.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 82.0, "list_price_currency": "USD", "set_price": 82.0, "set_price_currency": "TL"}, {"name": "HEC GFA", "group": "makas", "purchase_currency": "USD", "purchase_price": 22.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 82.0, "list_price_currency": "USD", "set_price": 82.0, "set_price_currency": "TL"}, {"name": "HEC HGT", "group": "makas", "purchase_currency": "USD", "purchase_price": 26.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 99.0, "list_price_currency": "USD", "set_price": 99.0, "set_price_currency": "TL"}, {"name": "HEC CHRYS", "group": "makas", "purchase_currency": "USD", "purchase_price": 25.0, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 98.0, "list_price_currency": "USD", "set_price": 98.0, "set_price_currency": "TL"}, {"name": "HEC CRYZ 65 OS", "group": "makas", "purchase_currency": "USD", "purchase_price": 24.63, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 97.0, "list_price_currency": "USD", "set_price": 97.0, "set_price_currency": "TL"}, {"name": "HEC CRYZ 60 OS T30", "group": "makas", "purchase_currency": "USD", "purchase_price": 24.63, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 97.0, "list_price_currency": "USD", "set_price": 97.0, "set_price_currency": "TL"}, {"name": "PULSAR ET PENSİ 5 mm", "group": "pens", "purchase_currency": "USD", "purchase_price": 3.8, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 13.5, "list_price_currency": "USD", "set_price": 13.5, "set_price_currency": "TL"}, {"name": "PULSAR ET PENSİ 7 mm", "group": "pens", "purchase_currency": "USD", "purchase_price": 3.8, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 13.5, "list_price_currency": "USD", "set_price": 13.5, "set_price_currency": "TL"}, {"name": "PULSAR ET PENSİ 9 mm", "group": "pens", "purchase_currency": "USD", "purchase_price": 3.9, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "list_price": 13.6, "list_price_currency": "USD", "set_price": 13.5, "set_price_currency": "TL"}, {"name": "FEATHER JİLET", "group": "jilet", "purchase_currency": "USD", "purchase_price": 3.39, "purchase_rate": 44.0, "freight_pct": 0.02, "customs_expense_pct": 0.02, "set_price": 8.6, "set_price_currency": "TL"}];
+
+function migrateProduct(p) {
+  if (p.list_price_tl != null && p.list_price == null) {
+    p.list_price = p.list_price_tl;
+    p.list_price_currency = p.list_price_currency || 'TL';
+    delete p.list_price_tl;
+  }
+  if (!p.list_price_currency) p.list_price_currency = 'TL';
+  if (!p.set_price_currency) p.set_price_currency = 'TL';
+  return p;
+}
+
+function loadSeed() {
+  state.products = SEED_PRODUCTS.map((p, i) => migrateProduct({
+    id: 'p_' + i + '_' + Date.now(), ...p, created_at: new Date().toISOString(),
+  }));
+}
+
+// ===== SUPABASE VERİ KATMANI =====
+// Tüm veriyi tek bir satırda saklıyoruz (key = 'main')
+async function persist() {
+  try {
+    const payload = JSON.stringify({
+      products: state.products,
+      categories: state.categories,
+      settings: state.settings,
+      history: state.history,
+      sales: state.sales
+    });
+    const { error } = await sb.from('app_data').upsert({ key: 'main', data: payload }, { onConflict: 'key' });
+    if (error) console.error('Supabase kayıt hatası:', error);
+  } catch(e) { console.error('persist hatası:', e); }
+}
+
+async function loadFromSupabase() {
+  try {
+    const { data, error } = await sb.from('app_data').select('data').eq('key', 'main').single();
+    if (error || !data) { loadSeed(); return; }
+    const parsed = JSON.parse(data.data);
+    if (parsed.products) state.products = parsed.products.map(migrateProduct);
+    if (parsed.categories) state.categories = parsed.categories;
+    if (parsed.settings) state.settings = { ...DEFAULT_SETTINGS, ...parsed.settings };
+    if (parsed.history) state.history = parsed.history;
+    if (parsed.sales) state.sales = parsed.sales;
+  } catch(e) { console.error('loadFromSupabase hatası:', e); loadSeed(); }
+}
+
+// Geriye dönük uyumluluk için — artık senkron değil ama persist çağrılarını yakalar
+function loadFromStorage() { return false; }
+
+function getCategoryById(id) {
+  return state.categories.find(c => c.id === id) || state.categories[state.categories.length - 1];
+}
+
+function getRateForCurrency(currency) {
+  if (currency === 'TL') return 1;
+  const src = state.settings.rate_source;
+  if (currency === 'USD') return src === 'manual' ? state.settings.manual_usd : state.settings.current_usd;
+  if (currency === 'EUR') return src === 'manual' ? state.settings.manual_eur : state.settings.current_eur;
+  return 1;
+}
+
+function calculate(product) {
+  const cat = getCategoryById(product.group);
+  const currentRate = getRateForCurrency(product.purchase_currency);
+  const usedRate = (product.purchase_rate && product.purchase_rate > 0) ? product.purchase_rate : currentRate;
+
+  const nakedCost = product.purchase_price * usedRate;
+  const addCustoms = nakedCost * cat.additional_customs;
+  const customs = nakedCost * cat.customs;
+  const freight = nakedCost * (product.freight_pct ?? state.settings.default_freight / 100);
+  const customsExp = nakedCost * (product.customs_expense_pct ?? state.settings.default_customs_exp / 100);
+  const otvRate = (product.otv_override != null) ? product.otv_override : cat.otv;
+  const otv = nakedCost * otvRate;
+
+  const subtotal = nakedCost + addCustoms + customs + freight + customsExp + otv;
+  const kdv = state.settings.kdv_enabled ? subtotal * (state.settings.kdv_rate / 100) : 0;
+  const totalCost = subtotal + kdv;
+
+  const minMarkupRatio = 1 + state.settings.min_markup_pct / 100;
+  const minSalePriceTL = totalCost * minMarkupRatio;
+
+  const listCurrency = product.list_price_currency || 'TL';
+  const listRate = getRateForCurrency(listCurrency);
+  const listPriceNative = product.list_price || 0;
+  const listPriceTL = listPriceNative * listRate;
+
+  const setCurrency = product.set_price_currency || 'TL';
+  const setRate = getRateForCurrency(setCurrency);
+  const setPriceNative = product.set_price || 0;
+  const setPriceTL = setPriceNative * setRate;
+
+  const activePriceTL = setPriceTL > 0 ? setPriceTL : listPriceTL;
+  const activeCurrency = setPriceTL > 0 ? setCurrency : listCurrency;
+  const activePriceNative = setPriceTL > 0 ? setPriceNative : listPriceNative;
+
+  const usdRate = getRateForCurrency('USD');
+  const toUSD = (tl) => usdRate > 0 ? tl / usdRate : 0;
+
+  const minSalePriceInListCur = listRate > 0 ? minSalePriceTL / listRate : minSalePriceTL;
+  const minSalePriceInSetCur = setRate > 0 ? minSalePriceTL / setRate : minSalePriceTL;
+
+  const profit = activePriceTL - totalCost;
+  const profitPct = totalCost > 0 ? (profit / totalCost) : 0;
+
+  const belowMinList = listPriceTL > 0 && listPriceTL < minSalePriceTL;
+  const belowMinSet = setPriceTL > 0 && setPriceTL < minSalePriceTL;
+  const belowMin = activePriceTL > 0 && activePriceTL < minSalePriceTL;
+
+  // Stock & sales projections
+  const stockQty = product.stock_qty || 0;
+  const monthlySales = product.monthly_sales_estimate || 0;
+  const stockValueTL = stockQty * totalCost;
+  const stockValueUSD = toUSD(stockValueTL);
+  const monthlyProfit = monthlySales * profit;
+  const annualProfit = monthlyProfit * 12;
+  const monthlyRevenue = monthlySales * activePriceTL;
+  const annualRevenue = monthlyRevenue * 12;
+  // Stok devir süresi (ay): kaç aylık stok var
+  const stockMonths = monthlySales > 0 ? stockQty / monthlySales : null;
+
+  // Currency risk: alış kuru ile bugünkü kur arasındaki fark
+  // Sadece alış kurunun manuel sabitlendiği ürünler için anlamlı
+  const currentRateForCurrency = getRateForCurrency(product.purchase_currency);
+  let currencyRiskPct = 0;
+  let currencyRiskLevel = 'none'; // none, low, medium, high
+  if (product.purchase_currency !== 'TL' && product.purchase_rate && product.purchase_rate > 0 && currentRateForCurrency > 0) {
+    currencyRiskPct = (currentRateForCurrency - product.purchase_rate) / product.purchase_rate;
+    const absPct = Math.abs(currencyRiskPct);
+    if (absPct >= 0.10) currencyRiskLevel = 'high';
+    else if (absPct >= 0.05) currencyRiskLevel = 'medium';
+    else if (absPct >= 0.02) currencyRiskLevel = 'low';
+  }
+  const replacementNakedCost = product.purchase_price * currentRateForCurrency;
+  const oldNakedCost = nakedCost; // already uses usedRate
+
+  return {
+    naked_cost: nakedCost, naked_cost_usd: toUSD(nakedCost),
+    used_rate: usedRate,
+    add_customs: addCustoms, customs: customs, freight: freight, customs_exp: customsExp, otv: otv, kdv: kdv,
+    taxes_total: addCustoms + customs + freight + customsExp + otv + kdv,
+    taxes_total_usd: toUSD(addCustoms + customs + freight + customsExp + otv + kdv),
+    total_cost: totalCost, total_cost_usd: toUSD(totalCost),
+    min_sale_price: minSalePriceTL, min_sale_price_usd: toUSD(minSalePriceTL),
+    min_sale_price_in_list_cur: minSalePriceInListCur, min_sale_price_in_set_cur: minSalePriceInSetCur,
+    list_price: listPriceNative, list_price_tl: listPriceTL, list_currency: listCurrency, list_rate: listRate,
+    list_price_usd: toUSD(listPriceTL),
+    set_price: setPriceNative, set_price_tl: setPriceTL, set_currency: setCurrency, set_rate: setRate,
+    set_price_usd: toUSD(setPriceTL),
+    active_price: activePriceNative, active_price_tl: activePriceTL, active_currency: activeCurrency,
+    profit: profit, profit_usd: toUSD(profit), profit_pct: profitPct,
+    below_min: belowMin, below_min_list: belowMinList, below_min_set: belowMinSet,
+    // Stock & sales
+    stock_qty: stockQty,
+    monthly_sales: monthlySales,
+    stock_value_tl: stockValueTL,
+    stock_value_usd: stockValueUSD,
+    monthly_profit: monthlyProfit,
+    monthly_profit_usd: toUSD(monthlyProfit),
+    annual_profit: annualProfit,
+    annual_profit_usd: toUSD(annualProfit),
+    monthly_revenue: monthlyRevenue,
+    annual_revenue: annualRevenue,
+    stock_months: stockMonths,
+    // Currency risk
+    currency_risk_pct: currencyRiskPct,
+    currency_risk_level: currencyRiskLevel,
+    current_rate_for_currency: currentRateForCurrency,
+    replacement_naked_cost: replacementNakedCost,
+    cost_diff_tl: replacementNakedCost - oldNakedCost,
+  };
+}
+
+const fmtTL = (n) => n == null || isNaN(n) ? '—' : new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(n);
+const fmtTL2 = (n) => n == null || isNaN(n) ? '—' : new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 2 }).format(n);
+const fmtUSD = (n) => n == null || isNaN(n) ? '—' : '$' + new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+const fmtNum = (n, d = 2) => n == null || isNaN(n) ? '—' : new Intl.NumberFormat('tr-TR', { minimumFractionDigits: d, maximumFractionDigits: d }).format(n);
+const fmtPct = (n) => n == null || isNaN(n) ? '—' : (n * 100).toFixed(1).replace('.', ',') + '%';
+const fmtRate = (n) => n == null || isNaN(n) ? '—' : Number(n).toFixed(4).replace('.', ',');
+const SYM = { TL: '₺', USD: '$', EUR: '€' };
+function fmtMoney(n, cur) {
+  if (n == null || isNaN(n)) return '—';
+  if (cur === 'TL') return fmtTL(n);
+  const sym = SYM[cur] || cur;
+  return sym + new Intl.NumberFormat('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+}
+
+function renderProducts() {
+  const tbody = document.getElementById('productTbody');
+  const search = state.filter.search.toLowerCase();
+  let filtered = state.products.map((p, idx) => ({ p, idx, calc: calculate(p) }));
+  if (search) filtered = filtered.filter(x => x.p.name.toLowerCase().includes(search));
+  if (state.filter.group) filtered = filtered.filter(x => x.p.group === state.filter.group);
+  if (state.filter.warning === 'warn') filtered = filtered.filter(x => x.calc.below_min);
+  if (state.filter.warning === 'ok') filtered = filtered.filter(x => !x.calc.below_min && (x.p.list_price || x.p.set_price));
+
+  document.getElementById('statTotal').textContent = filtered.length;
+  document.getElementById('statWarn').textContent = filtered.filter(x => x.calc.below_min).length;
+  const withPrice = filtered.filter(x => x.calc.active_price_tl > 0);
+  const avgMargin = withPrice.length ? withPrice.reduce((s, x) => s + x.calc.profit_pct, 0) / withPrice.length : 0;
+  document.getElementById('statMargin').textContent = withPrice.length ? fmtPct(avgMargin) : '—';
+  const stockValueTL = filtered.reduce((s, x) => s + x.calc.total_cost, 0);
+  const usdRate = getRateForCurrency('USD');
+  document.getElementById('statStockValue').textContent = fmtTL(stockValueTL);
+  document.getElementById('statStockValueUSD').textContent = usdRate > 0 ? fmtUSD(stockValueTL / usdRate) : '';
+
+  tbody.innerHTML = filtered.map(({ p, idx, calc }) => {
+    const cat = getCategoryById(p.group);
+    const rowClass = calc.below_min ? 'warn-bg warn-row' : 'ok-bg ok-row';
+    const profitClass = calc.profit_pct >= 0.5 ? 'text-emerald-700 font-medium' : (calc.profit_pct >= 0 ? 'text-amber-700' : 'text-red-700');
+    const warnIcon = calc.below_min ? '<span class="text-red-600 mr-1" title="%50 marjın altında">⚠</span>' : '';
+    const listClass = calc.below_min_list ? 'text-red-700 font-semibold' : 'text-slate-700';
+    const setClass = calc.below_min_set ? 'text-red-700 font-semibold' : 'text-slate-900 font-medium';
+
+    // Currency risk visual
+    let riskBadge = '';
+    if (calc.currency_risk_level !== 'none') {
+      const color = calc.currency_risk_level === 'high' ? 'bg-red-100 text-red-700' :
+                    calc.currency_risk_level === 'medium' ? 'bg-amber-100 text-amber-700' :
+                    'bg-slate-100 text-slate-600';
+      const icon = calc.currency_risk_level === 'high' ? '🔴' : calc.currency_risk_level === 'medium' ? '🟡' : '⚪';
+      const sign = calc.currency_risk_pct >= 0 ? '+' : '';
+      riskBadge = `<span class="inline-block ${color} rounded px-1 text-[9px] font-medium ml-1" title="Alış: ${fmtRate(p.purchase_rate||calc.used_rate)} → Bugün: ${fmtRate(calc.current_rate_for_currency)}">${icon} ${sign}${(calc.currency_risk_pct*100).toFixed(1)}%</span>`;
+    }
+
+    return `
+      <tr class="${rowClass}">
+        <td class="px-3 py-2 font-medium text-slate-900">${warnIcon}${escapeHtml(p.name)}${p.otv_override != null ? `<span class="ml-1 inline-block bg-amber-100 text-amber-800 rounded px-1 text-[9px] font-medium" title="Özel ÖTV: %${(p.otv_override*100).toFixed(1)}">ÖTV*</span>` : ''}</td>
+        <td class="px-3 py-2"><span class="group-badge grp-${p.group}">${escapeHtml(cat.name)}</span></td>
+        <td class="px-3 py-2 num text-slate-700">
+          <div>${fmtNum(p.purchase_price)} ${p.purchase_currency}</div>
+          <div class="sub-usd">kur: ${fmtRate(calc.used_rate)}${riskBadge}</div>
+        </td>
+        <td class="px-3 py-2 num text-slate-700">
+          <div>${fmtTL(calc.naked_cost)}</div>
+          <div class="sub-usd">${fmtUSD(calc.naked_cost_usd)}</div>
+        </td>
+        <td class="px-3 py-2 num text-slate-500">
+          <details>
+            <summary>
+              <div>${fmtTL(calc.taxes_total)}</div>
+              <div class="sub-usd">${fmtUSD(calc.taxes_total_usd)}</div>
+            </summary>
+            <div class="text-[10px] mt-1 text-left space-y-0.5">
+              <div>İl. Gümrük: ${fmtTL2(calc.add_customs)}</div>
+              <div>Gümrük: ${fmtTL2(calc.customs)}</div>
+              <div>Navlum: ${fmtTL2(calc.freight)}</div>
+              <div>Güm. Masrafı: ${fmtTL2(calc.customs_exp)}</div>
+              ${calc.otv > 0 ? `<div>ÖTV: ${fmtTL2(calc.otv)}</div>` : ''}
+              ${calc.kdv > 0 ? `<div>KDV: ${fmtTL2(calc.kdv)}</div>` : ''}
+            </div>
+          </details>
+        </td>
+        <td class="px-3 py-2 num font-semibold text-slate-900">
+          <div>${fmtTL(calc.total_cost)}</div>
+          <div class="sub-usd">${fmtUSD(calc.total_cost_usd)}</div>
+        </td>
+        <td class="px-3 py-2 num text-slate-700">
+          <div>${fmtTL(calc.min_sale_price)}</div>
+          <div class="sub-usd">${fmtUSD(calc.min_sale_price_usd)}</div>
+        </td>
+        <td class="px-3 py-2 num ${listClass}">
+          ${calc.list_price > 0 ? `
+            <div>${fmtMoney(calc.list_price, calc.list_currency)}</div>
+            ${calc.list_currency === 'TL'
+              ? `<div class="sub-usd">${fmtUSD(calc.list_price_usd)}</div>`
+              : `<div class="sub-usd">${fmtTL(calc.list_price_tl)}</div>`}
+          ` : '<span class="text-slate-400">—</span>'}
+        </td>
+        <td class="px-3 py-2 num ${setClass}">
+          ${calc.set_price > 0 ? `
+            <div>${fmtMoney(calc.set_price, calc.set_currency)}</div>
+            ${calc.set_currency === 'TL'
+              ? `<div class="sub-usd">${fmtUSD(calc.set_price_usd)}</div>`
+              : `<div class="sub-usd">${fmtTL(calc.set_price_tl)}</div>`}
+          ` : '<span class="text-slate-400">—</span>'}
+        </td>
+        <td class="px-3 py-2 num ${profitClass}">
+          ${calc.active_price_tl > 0 ? `
+            <div>${fmtTL(calc.profit)}</div>
+            <div class="sub-usd">${fmtUSD(calc.profit_usd)}</div>
+            <div class="text-[10px]">${fmtPct(calc.profit_pct)}</div>
+          ` : '<span class="text-slate-400">—</span>'}
+        </td>
+        <td class="px-3 py-2 num text-slate-700">
+          ${calc.stock_qty > 0 ? `
+            <div class="font-medium">${calc.stock_qty} ad</div>
+            <div class="sub-usd">${fmtTL(calc.stock_value_tl)}</div>
+            ${calc.monthly_sales > 0 ? `<div class="text-[10px] text-emerald-700">ay: ${calc.monthly_sales}</div>` : '<div class="text-[10px] text-slate-400">ay: —</div>'}
+          ` : `<span class="text-slate-400 text-[11px]">—</span>${calc.monthly_sales > 0 ? `<div class="text-[10px] text-emerald-700">ay: ${calc.monthly_sales}</div>` : ''}`}
+        </td>
+        <td class="px-3 py-2 text-right whitespace-nowrap">
+          <button class="editBtn pill-btn bg-slate-100 hover:bg-slate-200" data-idx="${idx}">Düzenle</button>
+          <button class="deleteBtn pill-btn bg-red-50 hover:bg-red-100 text-red-700" data-idx="${idx}">Sil</button>
+        </td>
+      </tr>`;
+  }).join('');
+
+  tbody.querySelectorAll('.editBtn').forEach(b => b.onclick = () => openProductModal(parseInt(b.dataset.idx)));
+  tbody.querySelectorAll('.deleteBtn').forEach(b => b.onclick = () => confirmDeleteProduct(parseInt(b.dataset.idx)));
+}
+
+function renderCategories() {
+  const tbody = document.getElementById('categoryTbody');
+  tbody.innerHTML = state.categories.map((cat, idx) => {
+    const count = state.products.filter(p => p.group === cat.id).length;
+    return `
+      <tr>
+        <td class="px-3 py-2 font-medium"><span class="group-badge grp-${cat.id}">${escapeHtml(cat.name)}</span></td>
+        <td class="px-3 py-2 num">${fmtPct(cat.additional_customs)}</td>
+        <td class="px-3 py-2 num">${fmtPct(cat.customs)}</td>
+        <td class="px-3 py-2 num">${cat.otv > 0 ? fmtPct(cat.otv) : '—'}</td>
+        <td class="px-3 py-2 num text-slate-500">${count}</td>
+        <td class="px-3 py-2 text-right">
+          <button class="editCatBtn pill-btn bg-slate-100 hover:bg-slate-200" data-idx="${idx}">Düzenle</button>
+        </td>
+      </tr>`;
+  }).join('');
+  tbody.querySelectorAll('.editCatBtn').forEach(b => b.onclick = () => openCategoryModal(parseInt(b.dataset.idx)));
+}
+
+function renderSettings() {
+  document.getElementById('rateSource').value = state.settings.rate_source;
+  document.getElementById('manualUSD').value = state.settings.manual_usd;
+  document.getElementById('manualEUR').value = state.settings.manual_eur;
+  document.getElementById('minMarkup').value = state.settings.min_markup_pct;
+  document.getElementById('kdvEnabled').checked = state.settings.kdv_enabled;
+  document.getElementById('kdvRate').value = state.settings.kdv_rate;
+  document.getElementById('defaultFreight').value = state.settings.default_freight;
+  document.getElementById('defaultCustomsExp').value = state.settings.default_customs_exp;
+  document.getElementById('storageStatus').textContent = storageAvailable
+    ? 'Verilerin tarayıcının belleğinde otomatik kayıtlı. Phase 2\'de buluta taşınacak.'
+    : 'Bu ortamda tarayıcı belleği kapalı — değişiklikler kaybolabilir.';
+}
+
+function renderHistory() {
+  const tbody = document.getElementById('historyTbody');
+  if (!state.history.length) {
+    tbody.innerHTML = `<tr><td colspan="6" class="px-3 py-8 text-center text-slate-400">Henüz değişiklik yapılmadı.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = state.history.slice().reverse().map(h => `
+    <tr>
+      <td class="px-3 py-2 text-slate-500 text-xs">${new Date(h.ts).toLocaleString('tr-TR')}</td>
+      <td class="px-3 py-2 font-medium">${escapeHtml(h.product_name)}</td>
+      <td class="px-3 py-2 text-slate-600">${escapeHtml(h.field)}</td>
+      <td class="px-3 py-2 num text-slate-500">${escapeHtml(String(h.old_value ?? '—'))}</td>
+      <td class="px-3 py-2 num font-medium">${escapeHtml(String(h.new_value ?? '—'))}</td>
+      <td class="px-3 py-2 text-slate-500">${escapeHtml(h.user || 'Ceyda')}</td>
+    </tr>`).join('');
+}
+
+function renderRateBar() {
+  document.getElementById('rateUSD').textContent = fmtRate(getRateForCurrency('USD'));
+  document.getElementById('rateEUR').textContent = fmtRate(getRateForCurrency('EUR'));
+  const dateEl = document.getElementById('ratesDate');
+  if (dateEl) {
+    if (state.settings.rate_source === 'manual') {
+      dateEl.textContent = 'Manuel';
+    } else if (state.settings.rates_date) {
+      dateEl.textContent = state.settings.rates_date;
+      dateEl.title = state.settings.rates_source_used || 'TCMB';
+    } else {
+      dateEl.textContent = '—';
+    }
+  }
+}
+
+// ============ ANALYTICS ============
+const charts = {};
+const GROUP_COLORS = {
+  tiras_makinesi: '#3b82f6',
+  duzlestirici_masa: '#ec4899',
+  firca: '#10b981',
+  makas: '#f59e0b',
+  pens: '#8b5cf6',
+  jilet: '#ef4444',
+  diger: '#64748b',
+};
+
+function destroyChart(key) {
+  if (charts[key]) { try { charts[key].destroy(); } catch(e) {} charts[key] = null; }
+}
+
+function renderAnalytics() {
+  if (typeof Chart === 'undefined') return; // Chart.js not loaded yet
+  const allCalcs = state.products.map(p => ({ p, calc: calculate(p) }));
+
+  // Summary stats
+  const totalCapitalTL = allCalcs.reduce((s, x) => s + x.calc.stock_value_tl, 0);
+  const totalQty = allCalcs.reduce((s, x) => s + x.calc.stock_qty, 0);
+  const productsWithStock = allCalcs.filter(x => x.calc.stock_qty > 0).length;
+  const monthlyProfitTL = allCalcs.reduce((s, x) => s + x.calc.monthly_profit, 0);
+  const annualProfitTL = monthlyProfitTL * 12;
+  const usdRate = getRateForCurrency('USD');
+  const toUSD = (tl) => usdRate > 0 ? tl / usdRate : 0;
+
+  document.getElementById('aTotalCapitalTL').textContent = fmtTL(totalCapitalTL);
+  document.getElementById('aTotalCapitalUSD').textContent = fmtUSD(toUSD(totalCapitalTL));
+  document.getElementById('aTotalQty').textContent = totalQty.toLocaleString('tr-TR') + ' ad';
+  document.getElementById('aProductCount').textContent = `${productsWithStock} / ${allCalcs.length} ürün stokta`;
+  document.getElementById('aMonthlyProfitTL').textContent = fmtTL(monthlyProfitTL);
+  document.getElementById('aMonthlyProfitUSD').textContent = fmtUSD(toUSD(monthlyProfitTL));
+  document.getElementById('aAnnualProfitTL').textContent = fmtTL(annualProfitTL);
+  document.getElementById('aAnnualProfitUSD').textContent = fmtUSD(toUSD(annualProfitTL));
+
+  // Capital by group (donut) — keyed by group id so we can color properly
+  const capitalByGroupId = {};
+  const profitByGroupId = {};
+  allCalcs.forEach(x => {
+    capitalByGroupId[x.p.group] = (capitalByGroupId[x.p.group] || 0) + x.calc.stock_value_tl;
+    profitByGroupId[x.p.group] = (profitByGroupId[x.p.group] || 0) + x.calc.monthly_profit;
+  });
+
+  const capEntries = Object.entries(capitalByGroupId).filter(([_, v]) => v > 0).sort((a,b) => b[1]-a[1]);
+  destroyChart('capital');
+  if (capEntries.length > 0 && totalCapitalTL > 0) {
+    charts.capital = new Chart(document.getElementById('chartCapitalByGroup'), {
+      type: 'doughnut',
+      data: {
+        labels: capEntries.map(([gid]) => getCategoryById(gid).name),
+        datasets: [{
+          data: capEntries.map(([_, v]) => v),
+          backgroundColor: capEntries.map(([gid]) => GROUP_COLORS[gid] || '#64748b'),
+          borderWidth: 2, borderColor: '#fff'
+        }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: {
+          legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } },
+          tooltip: { callbacks: { label: (ctx) => `${ctx.label}: ${fmtTL(ctx.parsed)} (${(ctx.parsed/totalCapitalTL*100).toFixed(1)}%)` } }
+        }
+      }
+    });
+  }
+
+  // Profit by group (bar)
+  const profEntries = Object.entries(profitByGroupId).filter(([_, v]) => v > 0).sort((a,b) => b[1]-a[1]);
+  destroyChart('profitGrp');
+  if (profEntries.length > 0) {
+    charts.profitGrp = new Chart(document.getElementById('chartProfitByGroup'), {
+      type: 'bar',
+      data: {
+        labels: profEntries.map(([gid]) => getCategoryById(gid).name),
+        datasets: [{
+          label: 'Aylık Kar (TL)', data: profEntries.map(([_, v]) => v),
+          backgroundColor: profEntries.map(([gid]) => GROUP_COLORS[gid] || '#10b981'), borderRadius: 6
+        }]
+      },
+      options: {
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => fmtTL(ctx.parsed.y) } } },
+        scales: { y: { ticks: { callback: (v) => fmtTL(v) } } }
+      }
+    });
+  }
+
+  // Top 10 capital
+  const top10cap = allCalcs.filter(x => x.calc.stock_value_tl > 0).sort((a,b) => b.calc.stock_value_tl - a.calc.stock_value_tl).slice(0, 10);
+  destroyChart('topCap');
+  if (top10cap.length > 0) {
+    charts.topCap = new Chart(document.getElementById('chartTopCapital'), {
+      type: 'bar',
+      data: {
+        labels: top10cap.map(x => x.p.name.length > 25 ? x.p.name.slice(0,25)+'…' : x.p.name),
+        datasets: [{
+          label: 'Sermaye (TL)', data: top10cap.map(x => x.calc.stock_value_tl),
+          backgroundColor: top10cap.map(x => GROUP_COLORS[x.p.group] || '#64748b'),
+          borderRadius: 4
+        }]
+      },
+      options: {
+        indexAxis: 'y', maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${fmtTL(ctx.parsed.x)} / ${fmtUSD(toUSD(ctx.parsed.x))}` } } },
+        scales: { x: { ticks: { callback: (v) => fmtTL(v) } } }
+      }
+    });
+  }
+
+  // Top 10 profit
+  const top10prof = allCalcs.filter(x => x.calc.monthly_profit > 0).sort((a,b) => b.calc.monthly_profit - a.calc.monthly_profit).slice(0, 10);
+  destroyChart('topProf');
+  if (top10prof.length > 0) {
+    charts.topProf = new Chart(document.getElementById('chartTopProfit'), {
+      type: 'bar',
+      data: {
+        labels: top10prof.map(x => x.p.name.length > 25 ? x.p.name.slice(0,25)+'…' : x.p.name),
+        datasets: [{
+          label: 'Aylık Kar (TL)', data: top10prof.map(x => x.calc.monthly_profit),
+          backgroundColor: top10prof.map(x => GROUP_COLORS[x.p.group] || '#64748b'),
+          borderRadius: 4
+        }]
+      },
+      options: {
+        indexAxis: 'y', maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${fmtTL(ctx.parsed.x)} → yıllık: ${fmtTL(ctx.parsed.x*12)}` } } },
+        scales: { x: { ticks: { callback: (v) => fmtTL(v) } } }
+      }
+    });
+  }
+
+  // Currency risk table
+  const riskItems = allCalcs.filter(x => Math.abs(x.calc.currency_risk_pct) >= 0.05).sort((a,b) => Math.abs(b.calc.currency_risk_pct) - Math.abs(a.calc.currency_risk_pct));
+  const riskTbody = document.getElementById('riskTbody');
+  if (riskItems.length === 0) {
+    riskTbody.innerHTML = `<tr><td colspan="8" class="px-3 py-6 text-center text-slate-400">Şu an yüksek kur riski olan ürün yok. ✓</td></tr>`;
+  } else {
+    riskTbody.innerHTML = riskItems.map(({p, calc}) => {
+      const color = calc.currency_risk_level === 'high' ? 'text-red-700' : 'text-amber-700';
+      const sign = calc.currency_risk_pct >= 0 ? '+' : '';
+      const cat = getCategoryById(p.group);
+      const diff = calc.cost_diff_tl;
+      const newCalc = { ...calc, naked_cost: calc.replacement_naked_cost };
+      // Calculate new total cost using replacement
+      const ratio = calc.replacement_naked_cost / calc.naked_cost;
+      const newTotal = calc.total_cost * ratio;
+      return `<tr>
+        <td class="px-3 py-2 font-medium">${escapeHtml(p.name)}</td>
+        <td class="px-3 py-2"><span class="group-badge grp-${p.group}">${escapeHtml(cat.name)}</span></td>
+        <td class="px-3 py-2 num">${fmtRate(p.purchase_rate || calc.used_rate)}</td>
+        <td class="px-3 py-2 num">${fmtRate(calc.current_rate_for_currency)}</td>
+        <td class="px-3 py-2 num font-bold ${color}">${sign}${(calc.currency_risk_pct*100).toFixed(1)}%</td>
+        <td class="px-3 py-2 num">${fmtTL(calc.total_cost)}</td>
+        <td class="px-3 py-2 num font-medium">${fmtTL(newTotal)}</td>
+        <td class="px-3 py-2 num ${color} font-medium">${diff >= 0 ? '+' : ''}${fmtTL(newTotal - calc.total_cost)}</td>
+      </tr>`;
+    }).join('');
+  }
+
+  // Margin / Price trend
+  renderTrendChart();
+}
+
+function renderTrendChart() {
+  // Get products that have price change history
+  const priceFields = ['Liste Fiyatı', 'Belirlenen Satış Fiyatı'];
+  const trendsByProduct = {};
+  state.history.forEach(h => {
+    if (!priceFields.includes(h.field)) return;
+    if (!trendsByProduct[h.product_name]) trendsByProduct[h.product_name] = [];
+    // Parse new_value like "130 USD"
+    const parseVal = (v) => {
+      if (v == null || v === '—') return null;
+      const m = String(v).match(/([0-9.]+)/);
+      return m ? parseFloat(m[1]) : null;
+    };
+    trendsByProduct[h.product_name].push({ ts: h.ts, value: parseVal(h.new_value), field: h.field });
+  });
+
+  const productsWithTrend = Object.keys(trendsByProduct).filter(name => trendsByProduct[name].length >= 1);
+
+  const empty = document.getElementById('trendEmpty');
+  const canvasWrap = document.getElementById('trendCanvasWrap');
+  const filtersDiv = document.getElementById('trendFilters');
+
+  if (productsWithTrend.length === 0) {
+    empty.style.display = 'block';
+    canvasWrap.style.display = 'none';
+    filtersDiv.style.display = 'none';
+    return;
+  }
+
+  empty.style.display = 'none';
+  canvasWrap.style.display = 'block';
+  filtersDiv.style.display = 'flex';
+
+  const sel = document.getElementById('trendProductFilter');
+  if (sel.options.length !== productsWithTrend.length) {
+    sel.innerHTML = productsWithTrend.map(n => `<option value="${escapeHtml(n)}">${escapeHtml(n)}</option>`).join('');
+  }
+  const selectedProduct = sel.value || productsWithTrend[0];
+  const entries = (trendsByProduct[selectedProduct] || []).filter(x => x.value != null).sort((a,b) => new Date(a.ts) - new Date(b.ts));
+
+  destroyChart('trend');
+  if (entries.length === 0) return;
+  charts.trend = new Chart(document.getElementById('chartTrend'), {
+    type: 'line',
+    data: {
+      labels: entries.map(e => new Date(e.ts).toLocaleDateString('tr-TR')),
+      datasets: [{
+        label: selectedProduct + ' fiyat değişimi',
+        data: entries.map(e => e.value),
+        borderColor: '#3b82f6', backgroundColor: 'rgba(59,130,246,0.1)',
+        tension: 0.3, fill: true, pointRadius: 5, pointBackgroundColor: '#3b82f6',
+      }]
+    },
+    options: {
+      maintainAspectRatio: false,
+      plugins: { legend: { display: true } }
+    }
+  });
+}
+
+function renderAll() {
+  renderRateBar();
+  renderProducts();
+  renderCategories();
+  renderSettings();
+  renderHistory();
+  renderAnalytics();
+  renderSalesTab();
+}
+
+function openProductModal(idx) {
+  state.editingProductIndex = idx;
+  document.getElementById('modalTitle').textContent = idx == null ? 'Yeni Ürün' : 'Ürünü Düzenle';
+  const sel = document.getElementById('m_group');
+  sel.innerHTML = state.categories.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+
+  if (idx != null) {
+    const p = state.products[idx];
+    document.getElementById('m_name').value = p.name;
+    document.getElementById('m_group').value = p.group;
+    document.getElementById('m_currency').value = p.purchase_currency;
+    document.getElementById('m_price').value = p.purchase_price;
+    document.getElementById('m_rate').value = p.purchase_rate || '';
+    document.getElementById('m_freight').value = ((p.freight_pct ?? state.settings.default_freight/100) * 100).toFixed(1);
+    document.getElementById('m_customsExp').value = ((p.customs_expense_pct ?? state.settings.default_customs_exp/100) * 100).toFixed(1);
+    document.getElementById('m_listPrice').value = p.list_price || '';
+    document.getElementById('m_listCurrency').value = p.list_price_currency || 'TL';
+    document.getElementById('m_setPrice').value = p.set_price || '';
+    document.getElementById('m_setCurrency').value = p.set_price_currency || 'TL';
+    document.getElementById('m_stockQty').value = p.stock_qty || '';
+    document.getElementById('m_monthlySales').value = p.monthly_sales_estimate || '';
+    // ÖTV override
+    const hasOverride = p.otv_override != null;
+    document.getElementById('m_otv_override_enabled').checked = hasOverride;
+    document.getElementById('m_otv_override_row').classList.toggle('hidden', !hasOverride);
+    document.getElementById('m_otv_override').value = hasOverride ? (p.otv_override * 100).toFixed(1) : '';
+  } else {
+    document.getElementById('m_name').value = '';
+    document.getElementById('m_group').value = 'tiras_makinesi';
+    document.getElementById('m_currency').value = 'USD';
+    document.getElementById('m_price').value = '';
+    document.getElementById('m_rate').value = '';
+    document.getElementById('m_freight').value = state.settings.default_freight;
+    document.getElementById('m_customsExp').value = state.settings.default_customs_exp;
+    document.getElementById('m_listPrice').value = '';
+    document.getElementById('m_listCurrency').value = 'USD';
+    document.getElementById('m_setPrice').value = '';
+    document.getElementById('m_setCurrency').value = 'TL';
+    document.getElementById('m_stockQty').value = '';
+    document.getElementById('m_monthlySales').value = '';
+    // ÖTV override sıfırla
+    document.getElementById('m_otv_override_enabled').checked = false;
+    document.getElementById('m_otv_override_row').classList.add('hidden');
+    document.getElementById('m_otv_override').value = '';
+  }
+  updateModalBreakdown();
+  document.getElementById('productModal').classList.remove('hidden');
+}
+
+function updateModalBreakdown() {
+  const draft = readProductFromModal();
+  if (!draft.purchase_price) {
+    document.getElementById('m_breakdown').innerHTML = '<span class="text-slate-400">Alış fiyatı gir, anlık hesabı gör.</span>';
+    document.getElementById('m_setHint').textContent = '';
+    return;
+  }
+  const calc = calculate(draft);
+  document.getElementById('m_breakdown').innerHTML = `
+    <div class="flex justify-between"><span class="text-slate-600">Çıplak Maliyet:</span><span class="num font-medium">${fmtTL2(calc.naked_cost)} <span class="sub-usd">/ ${fmtUSD(calc.naked_cost_usd)}</span></span></div>
+    <div class="flex justify-between"><span class="text-slate-600">İlave Gümrük:</span><span class="num">${fmtTL2(calc.add_customs)}</span></div>
+    <div class="flex justify-between"><span class="text-slate-600">Gümrük:</span><span class="num">${fmtTL2(calc.customs)}</span></div>
+    <div class="flex justify-between"><span class="text-slate-600">Navlum:</span><span class="num">${fmtTL2(calc.freight)}</span></div>
+    <div class="flex justify-between"><span class="text-slate-600">Gümrük Masrafı:</span><span class="num">${fmtTL2(calc.customs_exp)}</span></div>
+    ${calc.otv > 0 ? `<div class="flex justify-between"><span class="text-slate-600">ÖTV:</span><span class="num">${fmtTL2(calc.otv)}</span></div>` : ''}
+    ${calc.kdv > 0 ? `<div class="flex justify-between"><span class="text-slate-600">KDV:</span><span class="num">${fmtTL2(calc.kdv)}</span></div>` : ''}
+    <hr class="my-2 border-slate-200">
+    <div class="flex justify-between text-base"><span class="font-semibold text-slate-900">Toplam Maliyet:</span><span class="num font-bold text-slate-900">${fmtTL(calc.total_cost)} <span class="sub-usd">/ ${fmtUSD(calc.total_cost_usd)}</span></span></div>
+    <div class="flex justify-between"><span class="text-slate-600">Min Satış (%${state.settings.min_markup_pct}):</span><span class="num font-medium text-emerald-700">${fmtTL(calc.min_sale_price)} <span class="sub-usd">/ ${fmtUSD(calc.min_sale_price_usd)}</span></span></div>
+    ${calc.active_price_tl > 0 ? `
+      <hr class="my-2 border-slate-200">
+      <div class="flex justify-between"><span class="text-slate-600">Aktif Fiyat (${calc.set_price > 0 ? 'Belirlenen' : 'Liste'}):</span><span class="num font-medium ${calc.below_min ? 'text-red-700' : 'text-slate-900'}">${fmtMoney(calc.active_price, calc.active_currency)} <span class="sub-usd">/ ${fmtTL(calc.active_price_tl)}</span></span></div>
+      <div class="flex justify-between"><span class="text-slate-600">Birim Kar:</span><span class="num font-medium ${calc.profit_pct >= 0.5 ? 'text-emerald-700' : 'text-amber-700'}">${fmtTL(calc.profit)} <span class="sub-usd">/ ${fmtUSD(calc.profit_usd)}</span> (${fmtPct(calc.profit_pct)})</span></div>
+    ` : ''}
+    ${(calc.stock_qty > 0 || calc.monthly_sales > 0) && calc.active_price_tl > 0 ? `
+      <hr class="my-2 border-slate-200">
+      ${calc.stock_qty > 0 ? `<div class="flex justify-between"><span class="text-slate-600">Stok Değeri (${calc.stock_qty} ad):</span><span class="num font-medium">${fmtTL(calc.stock_value_tl)} <span class="sub-usd">/ ${fmtUSD(calc.stock_value_usd)}</span></span></div>` : ''}
+      ${calc.monthly_sales > 0 ? `
+        <div class="flex justify-between"><span class="text-slate-600">Aylık Kar (×${calc.monthly_sales} ad):</span><span class="num font-medium text-emerald-700">${fmtTL(calc.monthly_profit)} <span class="sub-usd">/ ${fmtUSD(calc.monthly_profit_usd)}</span></span></div>
+        <div class="flex justify-between"><span class="text-slate-600">Yıllık Kar Tahmini:</span><span class="num font-bold text-emerald-800">${fmtTL(calc.annual_profit)} <span class="sub-usd">/ ${fmtUSD(calc.annual_profit_usd)}</span></span></div>
+      ` : ''}
+      ${calc.stock_months != null ? `<div class="flex justify-between"><span class="text-slate-600">Stok Devir Süresi:</span><span class="num">${calc.stock_months.toFixed(1)} ay</span></div>` : ''}
+    ` : ''}`;
+
+  const hint = document.getElementById('m_setHint');
+  if (calc.set_price > 0) {
+    if (calc.below_min_set) {
+      const minTxt = calc.set_currency === 'TL' ? fmtTL(calc.min_sale_price) : fmtMoney(calc.min_sale_price_in_set_cur, calc.set_currency);
+      hint.innerHTML = `<span class="text-red-700 font-medium">⚠ %${state.settings.min_markup_pct} marjın altında! Min: ${minTxt}</span>`;
+    } else {
+      hint.innerHTML = `<span class="text-emerald-700">✓ Marj uygun (${fmtPct(calc.profit_pct)} kar)</span>`;
+    }
+  } else if (calc.list_price > 0 && calc.below_min_list) {
+    const minTxt = calc.list_currency === 'TL' ? fmtTL(calc.min_sale_price) : fmtMoney(calc.min_sale_price_in_list_cur, calc.list_currency);
+    hint.innerHTML = `<span class="text-amber-700">Liste fiyatı min altında. Min: ${minTxt}</span>`;
+  } else {
+    hint.textContent = '';
+  }
+}
+
+function readProductFromModal() {
+  const otvEnabled = document.getElementById('m_otv_override_enabled').checked;
+  const otvVal = parseFloat(document.getElementById('m_otv_override').value);
+  return {
+    name: document.getElementById('m_name').value.trim(),
+    group: document.getElementById('m_group').value,
+    purchase_currency: document.getElementById('m_currency').value,
+    purchase_price: parseFloat(document.getElementById('m_price').value) || 0,
+    purchase_rate: parseFloat(document.getElementById('m_rate').value) || null,
+    freight_pct: (parseFloat(document.getElementById('m_freight').value) || 0) / 100,
+    customs_expense_pct: (parseFloat(document.getElementById('m_customsExp').value) || 0) / 100,
+    list_price: parseFloat(document.getElementById('m_listPrice').value) || null,
+    list_price_currency: document.getElementById('m_listCurrency').value,
+    set_price: parseFloat(document.getElementById('m_setPrice').value) || null,
+    set_price_currency: document.getElementById('m_setCurrency').value,
+    stock_qty: parseInt(document.getElementById('m_stockQty').value) || 0,
+    monthly_sales_estimate: parseFloat(document.getElementById('m_monthlySales').value) || 0,
+    otv_override: (otvEnabled && !isNaN(otvVal)) ? otvVal / 100 : null,
+  };
+}
+
+function saveProduct() {
+  const draft = readProductFromModal();
+  if (!draft.name || !draft.purchase_price) { alert('Ürün adı ve alış fiyatı zorunlu.'); return; }
+  const calc = calculate(draft);
+  if (calc.below_min) {
+    if (!confirm(`⚠ Aktif fiyat %${state.settings.min_markup_pct} marjın altında!\nMin: ${fmtTL(calc.min_sale_price)}\n\nYine de kaydedeyim mi?`)) return;
+  }
+  if (state.editingProductIndex == null) {
+    state.products.push({ id: 'p_' + Date.now(), created_at: new Date().toISOString(), ...draft });
+    logHistory(draft.name, 'Eklendi', null, 'Yeni ürün');
+  } else {
+    const old = state.products[state.editingProductIndex];
+    if ((old.list_price || 0) !== (draft.list_price || 0) || old.list_price_currency !== draft.list_price_currency) {
+      logHistory(draft.name, 'Liste Fiyatı',
+        old.list_price ? `${old.list_price} ${old.list_price_currency || 'TL'}` : '—',
+        draft.list_price ? `${draft.list_price} ${draft.list_price_currency}` : '—');
+    }
+    if ((old.set_price || 0) !== (draft.set_price || 0) || old.set_price_currency !== draft.set_price_currency) {
+      logHistory(draft.name, 'Belirlenen Satış Fiyatı',
+        old.set_price ? `${old.set_price} ${old.set_price_currency || 'TL'}` : '—',
+        draft.set_price ? `${draft.set_price} ${draft.set_price_currency}` : '—');
+    }
+    if (old.purchase_price !== draft.purchase_price) logHistory(draft.name, 'Alış Fiyatı', `${old.purchase_price} ${old.purchase_currency}`, `${draft.purchase_price} ${draft.purchase_currency}`);
+    if (old.group !== draft.group) logHistory(draft.name, 'Grup', getCategoryById(old.group).name, getCategoryById(draft.group).name);
+    if ((old.stock_qty || 0) !== (draft.stock_qty || 0)) logHistory(draft.name, 'Stok Adedi', old.stock_qty || 0, draft.stock_qty || 0);
+    if ((old.monthly_sales_estimate || 0) !== (draft.monthly_sales_estimate || 0)) logHistory(draft.name, 'Aylık Satış Tahmini', old.monthly_sales_estimate || 0, draft.monthly_sales_estimate || 0);
+    const merged = { ...old, ...draft, updated_at: new Date().toISOString() };
+    delete merged.list_price_tl;
+    state.products[state.editingProductIndex] = merged;
+  }
+  closeProductModal();
+  persist();
+  renderAll();
+}
+
+function closeProductModal() {
+  document.getElementById('productModal').classList.add('hidden');
+  state.editingProductIndex = null;
+}
+
+function confirmDeleteProduct(idx) {
+  const p = state.products[idx];
+  showConfirm('Ürünü Sil', `"${p.name}" silinsin mi?`, () => {
+    logHistory(p.name, 'Silindi', 'Var', null);
+    state.products.splice(idx, 1);
+    persist(); renderAll();
+  });
+}
+
+function openCategoryModal(idx) {
+  state.editingCategoryIndex = idx;
+  const cat = state.categories[idx];
+  document.getElementById('catModalTitle').textContent = 'Kategori: ' + cat.name;
+  document.getElementById('c_name').value = cat.name;
+  document.getElementById('c_addCustoms').value = (cat.additional_customs * 100).toFixed(1);
+  document.getElementById('c_customs').value = (cat.customs * 100).toFixed(1);
+  document.getElementById('c_otv').value = (cat.otv * 100).toFixed(1);
+  document.getElementById('categoryModal').classList.remove('hidden');
+}
+
+function saveCategory() {
+  const idx = state.editingCategoryIndex;
+  if (idx == null) return;
+  const old = { ...state.categories[idx] };
+  state.categories[idx].name = document.getElementById('c_name').value.trim();
+  state.categories[idx].additional_customs = (parseFloat(document.getElementById('c_addCustoms').value) || 0) / 100;
+  state.categories[idx].customs = (parseFloat(document.getElementById('c_customs').value) || 0) / 100;
+  state.categories[idx].otv = (parseFloat(document.getElementById('c_otv').value) || 0) / 100;
+  if (old.additional_customs !== state.categories[idx].additional_customs || old.customs !== state.categories[idx].customs || old.otv !== state.categories[idx].otv) {
+    logHistory(`[Kategori: ${state.categories[idx].name}]`, 'Vergi Oranları',
+      `İlave:${(old.additional_customs*100).toFixed(1)}% Güm:${(old.customs*100).toFixed(1)}% ÖTV:${(old.otv*100).toFixed(1)}%`,
+      `İlave:${(state.categories[idx].additional_customs*100).toFixed(1)}% Güm:${(state.categories[idx].customs*100).toFixed(1)}% ÖTV:${(state.categories[idx].otv*100).toFixed(1)}%`);
+  }
+  closeCategoryModal();
+  persist(); renderAll();
+}
+
+function closeCategoryModal() {
+  document.getElementById('categoryModal').classList.add('hidden');
+  state.editingCategoryIndex = null;
+}
+
+function showConfirm(title, message, onYes) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmMessage').textContent = message;
+  document.getElementById('confirmModal').classList.remove('hidden');
+  document.getElementById('confirmYes').onclick = () => { document.getElementById('confirmModal').classList.add('hidden'); onYes(); };
+  document.getElementById('confirmNo').onclick = () => document.getElementById('confirmModal').classList.add('hidden');
+}
+
+function logHistory(productName, field, oldVal, newVal) {
+  state.history.push({ ts: new Date().toISOString(), product_name: productName, field: field, old_value: oldVal, new_value: newVal, user: 'Ceyda' });
+}
+
+async function fetchRates() {
+  if (state.settings.rate_source === 'manual') return;
+  const btn = document.getElementById('refreshRates');
+  if (btn) { btn.textContent = '⟳ Yükleniyor'; btn.disabled = true; }
+
+  let ok = false;
+
+  // Frankfurter API - CORS sorunu yok, direkt çalışır
+  try {
+    const res = await fetch('https://api.frankfurter.app/latest?base=USD&symbols=TRY,EUR');
+    if (res.ok) {
+      const d = await res.json();
+      if (d.rates && d.rates.TRY && d.rates.EUR) {
+        state.settings.current_usd = d.rates.TRY;
+        state.settings.current_eur = d.rates.TRY / d.rates.EUR;
+        state.settings.rates_date = d.date;
+        state.settings.rates_source_used = 'Frankfurter (ECB)';
+        persist(); renderAll();
+        ok = true;
+      }
+    }
+  } catch(e) { console.warn('Frankfurter hatası:', e); }
+
+  // Yedek: ExchangeRate-API
+  if (!ok) {
+    try {
+      const res = await fetch('https://open.er-api.com/v6/latest/USD');
+      if (res.ok) {
+        const d = await res.json();
+        if (d.rates && d.rates.TRY && d.rates.EUR) {
+          state.settings.current_usd = d.rates.TRY;
+          state.settings.current_eur = d.rates.TRY / d.rates.EUR;
+          state.settings.rates_date = d.time_last_update_utc ? d.time_last_update_utc.slice(0,10) : '';
+          state.settings.rates_source_used = 'ExchangeRate-API (yedek)';
+          persist(); renderAll();
+          ok = true;
+        }
+      }
+    } catch(e2) { console.warn('Yedek kur da başarısız:', e2); }
+  }
+
+  if (btn) { btn.textContent = '↻ Yenile'; btn.disabled = false; }
+}
+
+function exportAll() {
+  const payload = { products: state.products, categories: state.categories, settings: state.settings, history: state.history };
+  const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `maliyet-yedek-${new Date().toISOString().slice(0,10)}.json`;
+  a.click();
+}
+
+function exportExcel() {
+  const rows = [['Ürün','Grup','Alış','Alış Para','Alış Kuru','Çıplak Maliyet TL','Çıplak Maliyet USD','İl. Gümrük','Gümrük','Navlum','Güm. Masrafı','ÖTV','KDV','Vergi Toplam TL','Vergi Toplam USD','Toplam Maliyet TL','Toplam Maliyet USD','Min Satış TL','Min Satış USD','Liste Fiyatı','Liste Para','Liste TL','Liste USD','Belirlenen','Belirlenen Para','Belirlenen TL','Belirlenen USD','Kar TL','Kar USD','Kar %']];
+  state.products.forEach(p => {
+    const c = calculate(p); const cat = getCategoryById(p.group);
+    rows.push([p.name, cat.name, p.purchase_price, p.purchase_currency, c.used_rate, c.naked_cost, c.naked_cost_usd, c.add_customs, c.customs, c.freight, c.customs_exp, c.otv, c.kdv, c.taxes_total, c.taxes_total_usd, c.total_cost, c.total_cost_usd, c.min_sale_price, c.min_sale_price_usd, c.list_price || '', c.list_currency, c.list_price_tl || '', c.list_price_usd || '', c.set_price || '', c.set_currency, c.set_price_tl || '', c.set_price_usd || '', c.profit, c.profit_usd, c.profit_pct]);
+  });
+  const csv = rows.map(r => r.map(v => typeof v === 'string' && (v.includes(',') || v.includes(';')) ? `"${v.replace(/"/g, '""')}"` : v).join(';')).join('\n');
+  const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `maliyet-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+function importBackup(file) {
+  const r = new FileReader();
+  r.onload = (e) => {
+    try {
+      const d = JSON.parse(e.target.result);
+      if (d.products) state.products = d.products.map(migrateProduct);
+      if (d.categories) state.categories = d.categories;
+      if (d.settings) state.settings = { ...DEFAULT_SETTINGS, ...d.settings };
+      if (d.history) state.history = d.history;
+      persist(); renderAll();
+      alert('Yedek yüklendi.');
+    } catch(err) { alert('Okunamadı: ' + err.message); }
+  };
+  r.readAsText(file);
+}
+
+function escapeHtml(s) {
+  if (s == null) return '';
+  return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function init() {
+  // Veri artık onLoginSuccess içinde Supabase'den yükleniyor
+  // Burada sadece event listener'ları bağlıyoruz
+  document.getElementById('groupFilter').innerHTML = '<option value="">Tüm Gruplar</option>' + state.categories.map(c => `<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.onclick = () => {
+      document.querySelectorAll('.tab-btn').forEach(b => { b.classList.remove('tab-active'); b.classList.add('tab-inactive'); });
+      btn.classList.add('tab-active'); btn.classList.remove('tab-inactive');
+      document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+      document.getElementById('tab-' + btn.dataset.tab).classList.remove('hidden');
+      state.currentTab = btn.dataset.tab;
+      // Re-render analytics when switching to it so charts size correctly
+      if (btn.dataset.tab === 'analytics') {
+        setTimeout(() => renderAnalytics(), 50);
+      }
+      if (btn.dataset.tab === 'sales') {
+        setTimeout(() => renderSalesTab(), 50);
+      }
+    };
+  });
+  document.getElementById('trendProductFilter').onchange = () => renderTrendChart();
+
+  document.getElementById('searchInput').oninput = (e) => { state.filter.search = e.target.value; renderProducts(); };
+  document.getElementById('groupFilter').onchange = (e) => { state.filter.group = e.target.value; renderProducts(); };
+  document.getElementById('warningFilter').onchange = (e) => { state.filter.warning = e.target.value; renderProducts(); };
+
+  document.getElementById('addProductBtn').onclick = () => openProductModal(null);
+  document.getElementById('addCategoryBtn').onclick = () => {
+    const nc = { id: 'custom_' + Date.now(), name: 'Yeni Kategori', additional_customs: 0, customs: 0, otv: 0 };
+    state.categories.push(nc); persist(); renderCategories();
+    openCategoryModal(state.categories.length - 1);
+  };
+  document.getElementById('exportBtn').onclick = exportExcel;
+  document.getElementById('exportAllBtn').onclick = exportAll;
+  document.getElementById('importAllBtn').onclick = () => document.getElementById('importFile').click();
+  document.getElementById('importFile').onchange = (e) => { if (e.target.files[0]) importBackup(e.target.files[0]); };
+  document.getElementById('resetBtn').onclick = () => {
+    showConfirm('Sıfırla', 'Tüm değişiklikler silinecek, Excel\'deki orijinal liste yüklenecek.', () => {
+      state.products = []; state.categories = JSON.parse(JSON.stringify(DEFAULT_CATEGORIES)); state.history = [];
+      loadSeed(); persist(); renderAll();
+    });
+  };
+  document.getElementById('refreshRates').onclick = fetchRates;
+
+  document.querySelectorAll('.closeModal').forEach(b => b.onclick = closeProductModal);
+  document.querySelectorAll('.closeCatModal').forEach(b => b.onclick = closeCategoryModal);
+  document.getElementById('saveProductBtn').onclick = saveProduct;
+  document.getElementById('saveCategoryBtn').onclick = saveCategory;
+
+  ['m_name','m_group','m_currency','m_price','m_rate','m_freight','m_customsExp','m_listPrice','m_listCurrency','m_setPrice','m_setCurrency','m_stockQty','m_monthlySales','m_otv_override'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) {
+      el.addEventListener('input', updateModalBreakdown);
+      el.addEventListener('change', updateModalBreakdown);
+    }
+  });
+
+  document.getElementById('m_otv_override_enabled').addEventListener('change', (e) => {
+    document.getElementById('m_otv_override_row').classList.toggle('hidden', !e.target.checked);
+    updateModalBreakdown();
+  });
+
+  document.getElementById('rateSource').onchange = (e) => { state.settings.rate_source = e.target.value; persist(); renderAll(); if (e.target.value === 'auto') fetchRates(); };
+  document.getElementById('manualUSD').onchange = (e) => { state.settings.manual_usd = parseFloat(e.target.value) || 0; persist(); renderAll(); };
+  document.getElementById('manualEUR').onchange = (e) => { state.settings.manual_eur = parseFloat(e.target.value) || 0; persist(); renderAll(); };
+  document.getElementById('minMarkup').onchange = (e) => { state.settings.min_markup_pct = parseFloat(e.target.value) || 0; persist(); renderAll(); };
+  document.getElementById('kdvEnabled').onchange = (e) => { state.settings.kdv_enabled = e.target.checked; persist(); renderAll(); };
+  document.getElementById('kdvRate').onchange = (e) => { state.settings.kdv_rate = parseFloat(e.target.value) || 0; persist(); renderAll(); };
+  document.getElementById('defaultFreight').onchange = (e) => { state.settings.default_freight = parseFloat(e.target.value) || 0; persist(); renderAll(); };
+  document.getElementById('defaultCustomsExp').onchange = (e) => { state.settings.default_customs_exp = parseFloat(e.target.value) || 0; persist(); renderAll(); };
+  // renderAll ve fetchRates artık onLoginSuccess içinde çağrılıyor
+}
+
+// init DOM hazır olduğunda çalışsın
+document.addEventListener('DOMContentLoaded', init);
+
+// ============================================================
+// SATIŞ TAKİBİ
+// ============================================================
+
+let salesChartInstance = null;
+let salesCsvData = [];
+
+const MONTHS = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
+
+function renderSalesTab() {
+  populateSalesProductSelects();
+  populateSalesYearFilter();
+  renderSalesSummaryCards();
+  renderSalesChart();
+  renderTopSellers();
+  renderStockTurnover();
+  renderSalesTable();
+}
+
+function populateSalesProductSelects() {
+  const opts = '<option value="">Tüm Ürünler</option>' + state.products.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+  const sProduct = document.getElementById('s_product');
+  const sFilter = document.getElementById('s_filter_product');
+  if (sProduct) sProduct.innerHTML = state.products.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
+  if (sFilter) sFilter.innerHTML = opts;
+
+  // Ürün seçince maliyet bilgisi göster
+  if (sProduct) sProduct.onchange = updateSalesCostInfo;
+  updateSalesCostInfo();
+}
+
+function updateSalesCostInfo() {
+  const pid = document.getElementById('s_product')?.value;
+  const el = document.getElementById('s_cost_info');
+  if (!el) return;
+  const p = state.products.find(x => x.id === pid);
+  if (!p) { el.classList.add('hidden'); return; }
+  const calc = calculateProduct(p);
+  el.classList.remove('hidden');
+  el.innerHTML = `
+    <div class="flex justify-between"><span>Toplam Maliyet:</span><span class="font-semibold">${fmtTL2(calc.totalCost)}</span></div>
+    <div class="flex justify-between"><span>Min Satış (×1.5):</span><span class="font-semibold">${fmtTL2(calc.minSalePrice)}</span></div>
+    <div class="flex justify-between"><span>Belirlenen Fiyat:</span><span class="font-semibold">${calc.setPrice ? fmtTL2(calc.setPrice) : '—'}</span></div>
+    <div class="flex justify-between"><span>Mevcut Stok:</span><span class="font-semibold">${p.stock_qty || 0} ad</span></div>
+  `;
+}
+
+function populateSalesYearFilter() {
+  const years = new Set();
+  const now = new Date();
+  years.add(now.getFullYear());
+  years.add(now.getFullYear() - 1);
+  state.sales.forEach(s => years.add(s.year));
+  const sel = document.getElementById('s_filter_year');
+  if (!sel) return;
+  sel.innerHTML = [...years].sort((a,b)=>b-a).map(y => `<option value="${y}">${y}</option>`).join('');
+}
+
+function getFilteredSales() {
+  const pid = document.getElementById('s_filter_product')?.value || '';
+  const year = parseInt(document.getElementById('s_filter_year')?.value) || new Date().getFullYear();
+  return state.sales.filter(s => (!pid || s.productId === pid) && s.year === year);
+}
+
+function renderSalesSummaryCards() {
+  const year = parseInt(document.getElementById('s_filter_year')?.value) || new Date().getFullYear();
+  const yearSales = state.sales.filter(s => s.year === year);
+  const totalRev = yearSales.reduce((a,s) => a + (s.revenue||0), 0);
+  const totalQty = yearSales.reduce((a,s) => a + (s.qty||0), 0);
+  const totalCost = yearSales.reduce((a,s) => {
+    const p = state.products.find(x => x.id === s.productId);
+    if (!p) return a;
+    const calc = calculateProduct(p);
+    return a + calc.totalCost * (s.qty||0);
+  }, 0);
+  const totalProfit = totalRev - totalCost;
+  const margin = totalRev > 0 ? (totalProfit / totalRev * 100) : 0;
+
+  const el = document.getElementById('salesSummaryCards');
+  if (!el) return;
+  el.innerHTML = `
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+      <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">${year} Toplam Ciro</div>
+      <div class="text-2xl font-bold text-slate-900">${fmtTL2(totalRev)}</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+      <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">${year} Satış Adedi</div>
+      <div class="text-2xl font-bold text-slate-900">${totalQty.toLocaleString('tr-TR')} ad</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+      <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">${year} Tahmini Kar</div>
+      <div class="text-2xl font-bold ${totalProfit >= 0 ? 'text-green-600' : 'text-red-600'}">${fmtTL2(totalProfit)}</div>
+    </div>
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+      <div class="text-xs text-slate-500 uppercase tracking-wider mb-1">${year} Ort. Kar Marjı</div>
+      <div class="text-2xl font-bold ${margin >= 50 ? 'text-green-600' : 'text-amber-600'}">${margin.toFixed(1)}%</div>
+    </div>
+  `;
+}
+
+function renderSalesChart() {
+  const filtered = getFilteredSales();
+  const chartType = document.getElementById('s_chart_type')?.value || 'revenue';
+  const year = parseInt(document.getElementById('s_filter_year')?.value) || new Date().getFullYear();
+
+  // Aylık topla
+  const monthly = Array(12).fill(0).map((_,i) => ({month: i+1, revenue: 0, qty: 0, cost: 0}));
+  filtered.forEach(s => {
+    const m = monthly[s.month - 1];
+    m.revenue += s.revenue || 0;
+    m.qty += s.qty || 0;
+    const p = state.products.find(x => x.id === s.productId);
+    if (p) { const calc = calculateProduct(p); m.cost += calc.totalCost * (s.qty||0); }
+  });
+
+  let data, label, color;
+  if (chartType === 'revenue') {
+    data = monthly.map(m => m.revenue);
+    label = 'Ciro (TL)'; color = '#3b82f6';
+    document.getElementById('salesChartTitle').textContent = `${year} Aylık Ciro`;
+  } else if (chartType === 'qty') {
+    data = monthly.map(m => m.qty);
+    label = 'Satış Adedi'; color = '#8b5cf6';
+    document.getElementById('salesChartTitle').textContent = `${year} Aylık Satış Adedi`;
+  } else {
+    data = monthly.map(m => m.revenue > 0 ? ((m.revenue - m.cost) / m.revenue * 100) : 0);
+    label = 'Kar Marjı (%)'; color = '#10b981';
+    document.getElementById('salesChartTitle').textContent = `${year} Aylık Kar Marjı`;
+  }
+
+  const canvas = document.getElementById('salesChart');
+  if (!canvas) return;
+  if (salesChartInstance) { salesChartInstance.destroy(); salesChartInstance = null; }
+  salesChartInstance = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: MONTHS,
+      datasets: [{ label, data, backgroundColor: color + '99', borderColor: color, borderWidth: 1, borderRadius: 4 }]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { display: false } },
+      scales: { y: { beginAtZero: true, ticks: { callback: v => chartType === 'margin' ? v.toFixed(1)+'%' : fmtTL2(v) } } }
+    }
+  });
+}
+
+function renderTopSellers() {
+  const year = parseInt(document.getElementById('s_filter_year')?.value) || new Date().getFullYear();
+  const yearSales = state.sales.filter(s => s.year === year);
+  const byProduct = {};
+  yearSales.forEach(s => {
+    if (!byProduct[s.productId]) byProduct[s.productId] = { revenue: 0, qty: 0 };
+    byProduct[s.productId].revenue += s.revenue || 0;
+    byProduct[s.productId].qty += s.qty || 0;
+  });
+  const sorted = Object.entries(byProduct).sort((a,b) => b[1].revenue - a[1].revenue).slice(0, 8);
+  const el = document.getElementById('topSellersList');
+  if (!el) return;
+  if (!sorted.length) { el.innerHTML = '<p class="text-sm text-slate-400">Henüz satış kaydı yok.</p>'; return; }
+  const maxRev = sorted[0][1].revenue;
+  el.innerHTML = sorted.map(([pid, d], i) => {
+    const p = state.products.find(x => x.id === pid);
+    const name = p ? escapeHtml(p.name) : pid;
+    const pct = maxRev > 0 ? (d.revenue / maxRev * 100) : 0;
+    return `<div class="mb-3">
+      <div class="flex justify-between text-xs mb-1">
+        <span class="font-medium text-slate-800">${i+1}. ${name}</span>
+        <span class="text-slate-500">${fmtTL2(d.revenue)} · ${d.qty} ad</span>
+      </div>
+      <div class="h-2 bg-slate-100 rounded-full"><div class="h-2 bg-blue-500 rounded-full" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+}
+
+function renderStockTurnover() {
+  const year = parseInt(document.getElementById('s_filter_year')?.value) || new Date().getFullYear();
+  const yearSales = state.sales.filter(s => s.year === year);
+  const monthsWithData = new Set(yearSales.map(s => s.month)).size || 1;
+  const byProduct = {};
+  yearSales.forEach(s => {
+    if (!byProduct[s.productId]) byProduct[s.productId] = 0;
+    byProduct[s.productId] += s.qty || 0;
+  });
+  const el = document.getElementById('stockTurnoverList');
+  if (!el) return;
+  const rows = state.products
+    .filter(p => byProduct[p.id] || p.stock_qty)
+    .map(p => {
+      const totalQty = byProduct[p.id] || 0;
+      const avgMonthly = totalQty / monthsWithData;
+      const stock = p.stock_qty || 0;
+      const months = avgMonthly > 0 ? stock / avgMonthly : null;
+      return { p, stock, avgMonthly, months };
+    })
+    .sort((a,b) => (a.months||999) - (b.months||999))
+    .slice(0, 8);
+
+  if (!rows.length) { el.innerHTML = '<p class="text-sm text-slate-400">Henüz veri yok.</p>'; return; }
+  el.innerHTML = `<table class="w-full text-xs"><thead><tr class="text-slate-500">
+    <th class="text-left py-1">Ürün</th><th class="num py-1">Stok</th><th class="num py-1">Ort/Ay</th><th class="num py-1">Kalan Ay</th>
+  </tr></thead><tbody>` +
+  rows.map(({p, stock, avgMonthly, months}) => {
+    const color = months === null ? 'text-slate-400' : months < 2 ? 'text-red-600 font-bold' : months < 4 ? 'text-amber-600 font-semibold' : 'text-green-700';
+    return `<tr class="border-t border-slate-100">
+      <td class="py-1.5 font-medium text-slate-800">${escapeHtml(p.name)}</td>
+      <td class="num py-1.5">${stock} ad</td>
+      <td class="num py-1.5">${avgMonthly.toFixed(1)}</td>
+      <td class="num py-1.5 ${color}">${months !== null ? months.toFixed(1)+' ay' : '—'}</td>
+    </tr>`;
+  }).join('') + '</tbody></table>';
+}
+
+function renderSalesTable() {
+  const filtered = getFilteredSales().sort((a,b) => b.year*100+b.month - (a.year*100+a.month));
+  const el = document.getElementById('salesTbody');
+  if (!el) return;
+  if (!filtered.length) {
+    el.innerHTML = '<tr><td colspan="8" class="px-3 py-8 text-center text-slate-400">Henüz satış kaydı yok.</td></tr>';
+    return;
+  }
+  el.innerHTML = filtered.map((s, i) => {
+    const p = state.products.find(x => x.id === s.productId);
+    const name = p ? escapeHtml(p.name) : s.productId;
+    const calc = p ? calculateProduct(p) : null;
+    const unitCost = calc ? calc.totalCost : 0;
+    const totalCost = unitCost * (s.qty||0);
+    const profit = (s.revenue||0) - totalCost;
+    const margin = s.revenue > 0 ? (profit / s.revenue * 100) : 0;
+    const marginColor = margin >= 50 ? 'text-green-700' : margin >= 30 ? 'text-amber-700' : 'text-red-700';
+    return `<tr class="border-t border-slate-100 hover:bg-slate-50">
+      <td class="px-3 py-2 font-medium text-slate-800">${name}</td>
+      <td class="px-3 py-2 text-slate-600">${MONTHS[s.month-1]} ${s.year}</td>
+      <td class="px-3 py-2 num">${s.qty||0} ad</td>
+      <td class="px-3 py-2 num font-semibold">${fmtTL2(s.revenue||0)}</td>
+      <td class="px-3 py-2 num text-slate-500">${s.qty ? fmtTL2((s.revenue||0)/(s.qty)) : '—'}</td>
+      <td class="px-3 py-2 num text-slate-500">${fmtTL2(totalCost)}</td>
+      <td class="px-3 py-2 num font-semibold ${marginColor}">${margin.toFixed(1)}%</td>
+      <td class="px-3 py-2"><button onclick="deleteSalesEntry(${i})" class="text-red-400 hover:text-red-700 text-xs">Sil</button></td>
+    </tr>`;
+  }).join('');
+}
+
+function saveSalesEntry() {
+  const pid = document.getElementById('s_product').value;
+  const month = parseInt(document.getElementById('s_month').value);
+  const year = parseInt(document.getElementById('s_year').value);
+  const qty = parseInt(document.getElementById('s_qty').value) || 0;
+  const revenue = parseFloat(document.getElementById('s_revenue').value) || 0;
+
+  if (!pid || !qty) { alert('Ürün ve adet zorunlu!'); return; }
+
+  // Aynı ürün + ay + yıl varsa üzerine yaz
+  const existing = state.sales.findIndex(s => s.productId === pid && s.month === month && s.year === year);
+  const entry = { id: 'sale_'+Date.now(), productId: pid, month, year, qty, revenue };
+
+  if (existing >= 0) {
+    const old = state.sales[existing];
+    // Stoku geri ver, yenisini düş
+    const p = state.products.find(x => x.id === pid);
+    if (p) { p.stock_qty = (p.stock_qty||0) + (old.qty||0) - qty; }
+    state.sales[existing] = entry;
+  } else {
+    // Stoktan düş
+    const p = state.products.find(x => x.id === pid);
+    if (p) { p.stock_qty = Math.max(0, (p.stock_qty||0) - qty); }
+    state.sales.push(entry);
+  }
+
+  persist();
+  document.getElementById('s_qty').value = '';
+  document.getElementById('s_revenue').value = '';
+  renderSalesTab();
+  renderProducts();
+}
+
+function deleteSalesEntry(tableIdx) {
+  const year = parseInt(document.getElementById('s_filter_year')?.value) || new Date().getFullYear();
+  const pid = document.getElementById('s_filter_product')?.value || '';
+  const filtered = state.sales.filter(s => (!pid || s.productId === pid) && s.year === year)
+    .sort((a,b) => b.year*100+b.month - (a.year*100+a.month));
+  const entry = filtered[tableIdx];
+  if (!entry) return;
+  // Stoku geri ver
+  const p = state.products.find(x => x.id === entry.productId);
+  if (p) { p.stock_qty = (p.stock_qty||0) + (entry.qty||0); }
+  state.sales = state.sales.filter(s => s.id !== entry.id);
+  persist(); renderSalesTab(); renderProducts();
+}
+
+function clearAllSales() {
+  if (!confirm('Tüm satış kayıtları silinecek ve stoklar geri yüklenecek. Emin misin?')) return;
+  state.sales.forEach(s => {
+    const p = state.products.find(x => x.id === s.productId);
+    if (p) { p.stock_qty = (p.stock_qty||0) + (s.qty||0); }
+  });
+  state.sales = [];
+  persist(); renderSalesTab(); renderProducts();
+}
+
+// CSV Import
+let parsedCsvRows = [];
+document.addEventListener('DOMContentLoaded', () => {
+  const inp = document.getElementById('salesCsvInput');
+  if (inp) inp.onchange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      const lines = ev.target.result.split('\n').filter(l => l.trim());
+      parsedCsvRows = lines.slice(1).map(line => {
+        const cols = line.split(',').map(c => c.trim().replace(/"/g,''));
+        return { name: cols[0], month: parseInt(cols[1]), year: parseInt(cols[2]), qty: parseInt(cols[3]), revenue: parseFloat(cols[4]) };
+      }).filter(r => r.name && r.month && r.year && r.qty);
+
+      document.getElementById('csvPreviewTitle').textContent = `${parsedCsvRows.length} kayıt bulundu`;
+      document.getElementById('csvPreviewTable').innerHTML = `<table class="w-full"><thead><tr class="text-slate-500"><th class="text-left">Ürün</th><th>Ay</th><th>Yıl</th><th>Adet</th><th>Tutar</th></tr></thead><tbody>` +
+        parsedCsvRows.slice(0,5).map(r => `<tr><td>${r.name}</td><td>${r.month}</td><td>${r.year}</td><td>${r.qty}</td><td>${r.revenue}</td></tr>`).join('') +
+        (parsedCsvRows.length > 5 ? `<tr><td colspan="5" class="text-slate-400">...ve ${parsedCsvRows.length-5} kayıt daha</td></tr>` : '') +
+        '</tbody></table>';
+      document.getElementById('csvPreview').classList.remove('hidden');
+    };
+    reader.readAsText(file, 'UTF-8');
+  };
+});
+
+function importSalesCsv() {
+  let imported = 0, skipped = 0;
+  parsedCsvRows.forEach(r => {
+    const p = state.products.find(x => x.name.toLowerCase() === r.name.toLowerCase());
+    if (!p) { skipped++; return; }
+    const existing = state.sales.findIndex(s => s.productId === p.id && s.month === r.month && s.year === r.year);
+    const entry = { id: 'sale_'+Date.now()+'_'+Math.random(), productId: p.id, month: r.month, year: r.year, qty: r.qty, revenue: r.revenue };
+    if (existing >= 0) {
+      const old = state.sales[existing];
+      p.stock_qty = (p.stock_qty||0) + (old.qty||0) - r.qty;
+      state.sales[existing] = entry;
+    } else {
+      p.stock_qty = Math.max(0, (p.stock_qty||0) - r.qty);
+      state.sales.push(entry);
+    }
+    imported++;
+  });
+  persist(); renderSalesTab(); renderProducts();
+  document.getElementById('csvPreview').classList.add('hidden');
+  alert(`${imported} kayıt aktarıldı${skipped ? `, ${skipped} ürün bulunamadı` : ''}.`);
+}
+
+function downloadSalesCsvTemplate() {
+  const header = 'Ürün Adı,Ay,Yıl,Adet,Tutar (TL)';
+  const example = state.products.slice(0,3).map(p => `${p.name},1,2026,10,5000`).join('\n') || 'LINEAR X,1,2026,10,5000';
+  const blob = new Blob([header + '\n' + example], { type: 'text/csv;charset=utf-8;' });
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'satis-sablonu.csv'; a.click();
+}
+
+function exportSalesExcel() {
+  const year = parseInt(document.getElementById('s_filter_year')?.value) || new Date().getFullYear();
+  const rows = [['Ürün','Ay','Yıl','Adet','Ciro (TL)','Birim Maliyet','Toplam Maliyet','Kar (TL)','Kar %']];
+  state.sales.filter(s => s.year === year).forEach(s => {
+    const p = state.products.find(x => x.id === s.productId);
+    const calc = p ? calculateProduct(p) : null;
+    const cost = calc ? calc.totalCost * s.qty : 0;
+    const profit = (s.revenue||0) - cost;
+    const margin = s.revenue > 0 ? (profit/s.revenue*100).toFixed(1)+'%' : '—';
+    rows.push([p?.name||s.productId, MONTHS[s.month-1], s.year, s.qty, s.revenue||0, calc?.totalCost?.toFixed(2)||0, cost.toFixed(2), profit.toFixed(2), margin]);
+  });
+  const csv = rows.map(r => r.join(',')).join('\n');
+  const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `satis-${year}.csv`; a.click();
+}
+
+
+</script>
+</body>
+</html>
