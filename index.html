@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+v<!DOCTYPE html>
 <html lang="tr">
 <head>
 <meta charset="UTF-8">
@@ -101,13 +101,13 @@
   </header>
 
   <nav class="flex gap-1 mb-4 bg-white p-1 rounded-xl shadow-sm border border-slate-200 w-fit">
-    <button data-tab="products" class="tab-btn pill-btn tab-active">Ürünler</button>
-    <button data-tab="sales" class="tab-btn pill-btn tab-inactive">📦 Satış Takibi</button>
+    <button data-tab="products" class="tab-btn pill-btn tab-active">📦 Ürünler</button>
+    <button data-tab="sales" class="tab-btn pill-btn tab-inactive">💰 Satış Takibi</button>
     <button data-tab="service" class="tab-btn pill-btn tab-inactive">🔧 Teknik Servis</button>
     <button data-tab="analytics" class="tab-btn pill-btn tab-inactive">📊 Analitik</button>
-    <button data-tab="categories" class="tab-btn pill-btn tab-inactive">Kategoriler & Vergiler</button>
-    <button data-tab="settings" class="tab-btn pill-btn tab-inactive">Ayarlar</button>
-    <button data-tab="history" class="tab-btn pill-btn tab-inactive">Fiyat Geçmişi</button>
+    <button data-tab="categories" class="tab-btn pill-btn tab-inactive">🗂️ Kategoriler & Vergiler</button>
+    <button data-tab="settings" class="tab-btn pill-btn tab-inactive">⚙️ Ayarlar</button>
+    <button data-tab="history" class="tab-btn pill-btn tab-inactive">📚 Fiyat Geçmişi</button>
     <button data-tab="export" class="tab-btn pill-btn tab-inactive">🌍 Yurtdışı Fiyatları</button>
   </nav>
 
@@ -371,119 +371,77 @@
   <section id="tab-sales" class="tab-content hidden">
 
     <!-- Özet kartlar -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6" id="salesSummaryCards"></div>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4" id="salesSummaryCards"></div>
 
-    <!-- Giriş paneli -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
-
-      <!-- Manuel satış girişi -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-        <h3 class="font-bold text-slate-900 mb-4">Satış Girişi</h3>
-        <div class="space-y-3">
-          <div>
-            <label class="text-xs font-medium text-slate-600">Ürün</label>
-            <select id="s_product" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"></select>
-          </div>
-          <div class="grid grid-cols-2 gap-2">
-            <div>
-              <label class="text-xs font-medium text-slate-600">Ay</label>
-              <select id="s_month" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
-                <option value="1">Ocak</option><option value="2">Şubat</option><option value="3">Mart</option>
-                <option value="4">Nisan</option><option value="5">Mayıs</option><option value="6">Haziran</option>
-                <option value="7">Temmuz</option><option value="8">Ağustos</option><option value="9">Eylül</option>
-                <option value="10">Ekim</option><option value="11">Kasım</option><option value="12">Aralık</option>
-              </select>
-            </div>
-            <div>
-              <label class="text-xs font-medium text-slate-600">Yıl</label>
-              <input type="number" id="s_year" value="2026" min="2020" max="2030" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
-            </div>
-          </div>
-          <div>
-            <label class="text-xs font-medium text-slate-600">Satış Adedi</label>
-            <input type="number" id="s_qty" min="0" placeholder="0" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
-          </div>
-          <div>
-            <label class="text-xs font-medium text-slate-600">Satış Tutarı (TL)</label>
-            <input type="number" id="s_revenue" min="0" placeholder="0,00" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
-          </div>
-          <div id="s_cost_info" class="hidden bg-slate-50 rounded-lg p-3 text-xs text-slate-600 space-y-1"></div>
-          <button onclick="saveSalesEntry()" class="w-full py-2 bg-slate-900 text-white rounded-lg text-sm font-semibold hover:bg-slate-700 transition-colors">Kaydet</button>
-        </div>
+    <!-- Filtreler bar -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 mb-4 flex flex-wrap gap-2 items-end">
+      <div>
+        <label class="text-xs font-medium text-slate-500">Kategori</label>
+        <select id="s_filter_group" class="mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm min-w-[160px]">
+          <option value="">Tüm Kategoriler</option>
+        </select>
       </div>
-
-      <!-- CSV Import -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-        <h3 class="font-bold text-slate-900 mb-1">Mikro Jump'tan Aktar</h3>
-        <p class="text-xs text-slate-500 mb-4">CSV formatında: Ürün Adı, Ay, Yıl, Adet, Tutar (TL)</p>
-        <div class="border-2 border-dashed border-slate-200 rounded-lg p-6 text-center mb-3">
-          <div class="text-3xl mb-2">📂</div>
-          <p class="text-sm text-slate-600 mb-2">CSV dosyasını sürükle veya seç</p>
-          <input type="file" id="salesCsvInput" accept=".csv" class="hidden">
-          <button onclick="document.getElementById('salesCsvInput').click()" class="pill-btn bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs">Dosya Seç</button>
-        </div>
-        <div id="csvPreview" class="hidden">
-          <p class="text-xs font-medium text-slate-700 mb-2" id="csvPreviewTitle"></p>
-          <div id="csvPreviewTable" class="overflow-x-auto text-xs max-h-32 overflow-y-auto"></div>
-          <button onclick="importSalesCsv()" class="mt-3 w-full py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700">İçe Aktar</button>
-        </div>
-        <div class="mt-4 pt-4 border-t border-slate-100">
-          <p class="text-xs text-slate-500 mb-2">Örnek CSV şablonu:</p>
-          <button onclick="downloadSalesCsvTemplate()" class="pill-btn bg-slate-100 text-slate-700 hover:bg-slate-200 text-xs">⬇ Şablon İndir</button>
-        </div>
+      <div>
+        <label class="text-xs font-medium text-slate-500">Ürün</label>
+        <select id="s_filter_product" class="mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm min-w-[160px]">
+          <option value="">Tüm Ürünler</option>
+        </select>
       </div>
+      <div>
+        <label class="text-xs font-medium text-slate-500">Yıl</label>
+        <select id="s_filter_year" class="mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm"></select>
+      </div>
+      <div>
+        <label class="text-xs font-medium text-slate-500">Grafik Modu</label>
+        <select id="s_view_mode" class="mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          <option value="monthly">Aylık Görünüm</option>
+          <option value="yearly">Yıllık Karşılaştırma</option>
+        </select>
+      </div>
+      <div>
+        <label class="text-xs font-medium text-slate-500">Veri</label>
+        <select id="s_chart_type" class="mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          <option value="revenue">Ciro (TL)</option>
+          <option value="qty">Satış Adedi</option>
+          <option value="margin">Kar Marjı (%)</option>
+        </select>
+      </div>
+      <button onclick="applySalesFilters()" class="pill-btn bg-slate-900 text-white hover:bg-slate-700">Uygula</button>
+      <div class="flex-1"></div>
+      <button onclick="exportSalesExcel()" class="pill-btn bg-white border border-slate-200 hover:bg-slate-50">⬇ Excel</button>
+    </div>
 
-      <!-- Filtreler + grafik tipi -->
+    <!-- Grafikler: Aylık Ciro + Pasta yan yana -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 mb-4">
+      <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="font-bold text-slate-900 mb-3" id="salesChartTitle">Aylık Ciro</h3>
+        <canvas id="salesChart" height="110"></canvas>
+      </div>
       <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-        <h3 class="font-bold text-slate-900 mb-4">Filtreler</h3>
-        <div class="space-y-3">
-          <div>
-            <label class="text-xs font-medium text-slate-600">Ürün Filtresi</label>
-            <select id="s_filter_product" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
-              <option value="">Tüm Ürünler</option>
-            </select>
-          </div>
-          <div>
-            <label class="text-xs font-medium text-slate-600">Yıl</label>
-            <select id="s_filter_year" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"></select>
-          </div>
-          <div>
-            <label class="text-xs font-medium text-slate-600">Görünüm</label>
-            <select id="s_chart_type" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
-              <option value="revenue">Aylık Ciro (TL)</option>
-              <option value="qty">Aylık Satış Adedi</option>
-              <option value="margin">Aylık Kar Marjı (%)</option>
-            </select>
-          </div>
-          <button onclick="renderSalesTab()" class="w-full py-2 bg-slate-100 text-slate-800 rounded-lg text-sm font-semibold hover:bg-slate-200">Uygula</button>
-          <button onclick="exportSalesExcel()" class="w-full py-2 bg-green-50 text-green-800 border border-green-200 rounded-lg text-sm font-semibold hover:bg-green-100">⬇ Excel'e Aktar</button>
+        <h3 class="font-bold text-slate-900 mb-1">Gruplara Göre Satış</h3>
+        <p class="text-xs text-slate-400 mb-3">Seçili yıl ciro dağılımı</p>
+        <div style="height:200px; position:relative;">
+          <canvas id="salesGroupPieChart"></canvas>
         </div>
+        <div id="salesGroupPieLegend" class="mt-3 flex flex-wrap gap-2 text-xs"></div>
       </div>
     </div>
 
-    <!-- Grafik -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-6">
-      <div class="flex items-center justify-between mb-4">
-        <h3 class="font-bold text-slate-900" id="salesChartTitle">Aylık Satış Grafiği</h3>
-      </div>
-      <canvas id="salesChart" height="80"></canvas>
-    </div>
-
-    <!-- En çok satanlar + stok devir -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+    <!-- Stok Devir Hızı + En Çok Satanlar yan yana -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
       <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-        <h3 class="font-bold text-slate-900 mb-4">🏆 En Çok Satan Ürünler</h3>
-        <div id="topSellersList"></div>
-      </div>
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-        <h3 class="font-bold text-slate-900 mb-4">🔄 Stok Devir Hızı</h3>
-        <p class="text-xs text-slate-500 mb-3">Mevcut stok / aylık ort. satış = kaç aylık stok</p>
+        <h3 class="font-bold text-slate-900 mb-1">🔄 Stok Devir Hızı</h3>
+        <p class="text-xs text-slate-500 mb-3">Mevcut stok / aylık ort. satış = kaç aylık stok kaldı</p>
         <div id="stockTurnoverList"></div>
       </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="font-bold text-slate-900 mb-3">🏆 En Çok Satan Ürünler</h3>
+        <div id="topSellersList"></div>
+      </div>
     </div>
 
-    <!-- Satış kayıtları tablosu -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+    <!-- Satış Kayıtları tablosu -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-4">
       <div class="flex items-center justify-between mb-4">
         <h3 class="font-bold text-slate-900">Satış Kayıtları</h3>
         <button onclick="clearAllSales()" class="pill-btn bg-red-50 text-red-700 hover:bg-red-100 border border-red-200 text-xs">Tümünü Sil</button>
@@ -504,6 +462,74 @@
           </thead>
           <tbody id="salesTbody"></tbody>
         </table>
+      </div>
+    </div>
+
+    <!-- En alta: Satış Girişi + Mikro Jump yan yana -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+
+      <!-- Satış Girişi -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="font-bold text-slate-900 mb-4">➕ Satış Girişi</h3>
+        <div class="space-y-3">
+          <div>
+            <label class="text-xs font-medium text-slate-600">Ürün</label>
+            <select id="s_product" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"></select>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-xs font-medium text-slate-600">Ay</label>
+              <select id="s_month" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                <option value="1">Ocak</option><option value="2">Şubat</option><option value="3">Mart</option>
+                <option value="4">Nisan</option><option value="5">Mayıs</option><option value="6">Haziran</option>
+                <option value="7">Temmuz</option><option value="8">Ağustos</option><option value="9">Eylül</option>
+                <option value="10">Ekim</option><option value="11">Kasım</option><option value="12">Aralık</option>
+              </select>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600">Yıl</label>
+              <input type="number" id="s_year" value="2026" min="2020" max="2030" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+            </div>
+          </div>
+          <div class="flex items-center gap-2 py-1">
+            <input type="checkbox" id="s_no_stock" class="rounded w-4 h-4"
+              onchange="document.getElementById('s_qty_row').classList.toggle('opacity-40', this.checked); document.getElementById('s_revenue_row').classList.toggle('opacity-40', this.checked);">
+            <label for="s_no_stock" class="text-sm text-slate-700 cursor-pointer">Bu dönem stok yoktu (satış yapılamadı)</label>
+          </div>
+          <div id="s_qty_row">
+            <label class="text-xs font-medium text-slate-600">Satış Adedi</label>
+            <input type="number" id="s_qty" min="0" placeholder="0" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+          </div>
+          <div id="s_revenue_row">
+            <label class="text-xs font-medium text-slate-600">Satış Tutarı (TL)</label>
+            <input type="number" id="s_revenue" min="0" placeholder="0,00" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+          </div>
+          <div id="s_cost_info" class="hidden bg-slate-50 rounded-lg p-3 text-xs text-slate-600 space-y-1"></div>
+          <button onclick="saveSalesEntry()" class="w-full py-2 bg-slate-900 text-white rounded-lg text-sm font-semibold hover:bg-slate-700 transition-colors">Kaydet</button>
+        </div>
+      </div>
+
+      <!-- Mikro Jump -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <div class="flex items-center justify-between mb-3">
+          <div>
+            <h3 class="font-bold text-slate-900">📂 Mikro Jump'tan Aktar</h3>
+            <p class="text-xs text-slate-400 mt-0.5">Format: Stok İsmi · Satılan Miktar · İade · Satış (TL)</p>
+          </div>
+          <button onclick="downloadSalesCsvTemplate()" class="pill-btn bg-slate-100 text-slate-600 hover:bg-slate-200 text-xs">⬇ Şablon</button>
+        </div>
+        <div class="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center mb-3 hover:border-slate-400 transition-colors cursor-pointer"
+          onclick="document.getElementById('salesCsvInput').click()">
+          <div class="text-3xl mb-2">📁</div>
+          <p class="text-sm text-slate-600 mb-1">CSV dosyasını buraya sürükle veya tıkla</p>
+          <p class="text-xs text-slate-400">Mikro Jump raporu otomatik tanınır</p>
+          <input type="file" id="salesCsvInput" accept=".csv" class="hidden">
+        </div>
+        <div id="csvPreview" class="hidden">
+          <p class="text-xs font-medium text-slate-700 mb-2" id="csvPreviewTitle"></p>
+          <div id="csvPreviewTable" class="overflow-x-auto text-xs max-h-32 overflow-y-auto border border-slate-100 rounded-lg p-2 mb-2"></div>
+          <button onclick="importSalesCsv()" class="w-full py-2 bg-green-600 text-white rounded-lg text-sm font-semibold hover:bg-green-700">İçe Aktar</button>
+        </div>
       </div>
     </div>
 
@@ -666,8 +692,7 @@
     <div class="bg-blue-50 border border-blue-200 rounded-xl p-3 mb-4 flex items-start gap-2">
       <div class="text-blue-600 text-lg">🌍</div>
       <div class="text-sm text-blue-900">
-        <strong>Beyza Hanım'ın Fiyat Paneli</strong> — Her ürün için USD ve EUR satış fiyatını gir.
-        Minimum fiyat <strong>toplam maliyet × %150</strong> olarak hesaplanır (yurt içiyle aynı kural).
+        <strong>Yurtdışı Ekibi </strong> — Her ürün için USD ve EUR satış fiyatını gir.
         Kar marjı otomatik güncellenir.
       </div>
     </div>
@@ -2310,24 +2335,72 @@ let salesCsvData = [];
 
 const MONTHS = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'];
 
-function renderSalesTab() {
-  populateSalesProductSelects();
-  populateSalesYearFilter();
+
+function toggleMikroJump() {
+  const body = document.getElementById('mikroJumpBody');
+  const chevron = document.getElementById('mikroJumpChevron');
+  if (body.classList.contains('hidden')) {
+    body.classList.remove('hidden');
+    chevron.textContent = '▾';
+  } else {
+    body.classList.add('hidden');
+    chevron.textContent = '▸';
+  }
+}
+
+function applySalesFilters() {
   renderSalesSummaryCards();
   renderSalesChart();
+  renderSalesGroupPie();
+  renderTopSellers();
+  renderStockTurnover();
+  renderSalesTable();
+}
+
+function renderSalesTab() {
+  // Filtre dropdown'larını sadece bir kez doldur (seçili değeri korumak için)
+  const sProduct = document.getElementById('s_filter_product');
+  const sYear = document.getElementById('s_filter_year');
+  const prevPid = sProduct?.value || '';
+  const prevYear = sYear?.value || '';
+
+  populateSalesProductSelects();
+  populateSalesYearFilter();
+
+  // Önceki seçimleri geri yükle
+  if (prevPid && sProduct) sProduct.value = prevPid;
+  if (prevYear && sYear) sYear.value = prevYear;
+
+  renderSalesSummaryCards();
+  renderSalesChart();
+  renderSalesGroupPie();
   renderTopSellers();
   renderStockTurnover();
   renderSalesTable();
 }
 
 function populateSalesProductSelects() {
-  const opts = '<option value="">Tüm Ürünler</option>' + state.products.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
-  const sProduct = document.getElementById('s_product');
-  const sFilter = document.getElementById('s_filter_product');
-  if (sProduct) sProduct.innerHTML = state.products.map(p => `<option value="${p.id}">${escapeHtml(p.name)}</option>`).join('');
-  if (sFilter) sFilter.innerHTML = opts;
+  // Kategori filtresi dropdown
+  const sGroup = document.getElementById('s_filter_group');
+  if (sGroup && sGroup.options.length <= 1) {
+    sGroup.innerHTML = '<option value="">Tüm Kategoriler</option>' +
+      state.categories.map(c => '<option value="' + c.id + '">' + escapeHtml(c.name) + '</option>').join('');
+  }
 
-  // Ürün seçince maliyet bilgisi göster
+  // Ürün filtresi — kategoriye göre filtrele
+  function refreshProductFilter() {
+    const grp = document.getElementById('s_filter_group')?.value || '';
+    const sFilter = document.getElementById('s_filter_product');
+    const filtered = grp ? state.products.filter(p => p.group === grp) : state.products;
+    if (sFilter) sFilter.innerHTML = '<option value="">Tüm Ürünler</option>' +
+      filtered.map(p => '<option value="' + p.id + '">' + escapeHtml(p.name) + '</option>').join('');
+  }
+  refreshProductFilter();
+  if (sGroup) sGroup.onchange = () => { refreshProductFilter(); };
+
+  // Satış girişi ürün dropdown
+  const sProduct = document.getElementById('s_product');
+  if (sProduct) sProduct.innerHTML = state.products.map(p => '<option value="' + p.id + '">' + escapeHtml(p.name) + '</option>').join('');
   if (sProduct) sProduct.onchange = updateSalesCostInfo;
   updateSalesCostInfo();
 }
@@ -2360,9 +2433,18 @@ function populateSalesYearFilter() {
 }
 
 function getFilteredSales() {
-  const pid = document.getElementById('s_filter_product')?.value || '';
-  const year = parseInt(document.getElementById('s_filter_year')?.value) || new Date().getFullYear();
-  return state.sales.filter(s => (!pid || s.productId === pid) && s.year === year);
+  const pid   = document.getElementById('s_filter_product')?.value || '';
+  const grp   = document.getElementById('s_filter_group')?.value || '';
+  const year  = parseInt(document.getElementById('s_filter_year')?.value) || new Date().getFullYear();
+  return state.sales.filter(s => {
+    if (s.year !== year) return false;
+    if (pid && s.productId !== pid) return false;
+    if (grp) {
+      const p = state.products.find(x => x.id === s.productId);
+      if (!p || p.group !== grp) return false;
+    }
+    return true;
+  });
 }
 
 function renderSalesSummaryCards() {
@@ -2402,51 +2484,195 @@ function renderSalesSummaryCards() {
 }
 
 function renderSalesChart() {
-  const filtered = getFilteredSales();
+  const viewMode  = document.getElementById('s_view_mode')?.value || 'monthly';
   const chartType = document.getElementById('s_chart_type')?.value || 'revenue';
-  const year = parseInt(document.getElementById('s_filter_year')?.value) || new Date().getFullYear();
-
-  // Aylık topla
-  const monthly = Array(12).fill(0).map((_,i) => ({month: i+1, revenue: 0, qty: 0, cost: 0}));
-  filtered.forEach(s => {
-    const m = monthly[s.month - 1];
-    m.revenue += s.revenue || 0;
-    m.qty += s.qty || 0;
-    const p = state.products.find(x => x.id === s.productId);
-    if (p) { const calc = calculateProduct(p); m.cost += calc.totalCost * (s.qty||0); }
-  });
-
-  let data, label, color;
-  if (chartType === 'revenue') {
-    data = monthly.map(m => m.revenue);
-    label = 'Ciro (TL)'; color = '#3b82f6';
-    document.getElementById('salesChartTitle').textContent = `${year} Aylık Ciro`;
-  } else if (chartType === 'qty') {
-    data = monthly.map(m => m.qty);
-    label = 'Satış Adedi'; color = '#8b5cf6';
-    document.getElementById('salesChartTitle').textContent = `${year} Aylık Satış Adedi`;
-  } else {
-    data = monthly.map(m => m.revenue > 0 ? ((m.revenue - m.cost) / m.revenue * 100) : 0);
-    label = 'Kar Marjı (%)'; color = '#10b981';
-    document.getElementById('salesChartTitle').textContent = `${year} Aylık Kar Marjı`;
-  }
+  const selYear   = parseInt(document.getElementById('s_filter_year')?.value) || new Date().getFullYear();
+  const selPid    = document.getElementById('s_filter_product')?.value || '';
+  const selGroup  = document.getElementById('s_filter_group')?.value || '';
 
   const canvas = document.getElementById('salesChart');
   if (!canvas) return;
   if (salesChartInstance) { salesChartInstance.destroy(); salesChartInstance = null; }
-  salesChartInstance = new Chart(canvas, {
-    type: 'bar',
+
+  // Filtre uygula
+  function filterSales(sales) {
+    return sales.filter(s => {
+      if (s.no_stock) return false;
+      if (selPid && s.productId !== selPid) return false;
+      if (selGroup) {
+        const p = state.products.find(x => x.id === s.productId);
+        if (!p || p.group !== selGroup) return false;
+      }
+      return true;
+    });
+  }
+
+  function calcMargin(rev, cost) {
+    return rev > 0 ? ((rev - cost) / rev * 100) : 0;
+  }
+
+  function getSalesCost(s) {
+    const p = state.products.find(x => x.id === s.productId);
+    if (!p) return 0;
+    const calc = calculateProduct(p);
+    return calc.totalCost * (s.qty || 0);
+  }
+
+  // ---------- AYLIK GÖRÜNÜM ----------
+  if (viewMode === 'monthly') {
+    const monthly = Array(12).fill(0).map((_, i) => ({ month: i+1, revenue: 0, qty: 0, cost: 0 }));
+    filterSales(state.sales.filter(s => s.year === selYear)).forEach(s => {
+      const m = monthly[s.month - 1];
+      m.revenue += s.revenue || 0;
+      m.qty     += s.qty || 0;
+      m.cost    += getSalesCost(s);
+    });
+
+    let data, label, color;
+    if (chartType === 'revenue') {
+      data = monthly.map(m => m.revenue); label = 'Ciro (TL)'; color = '#3b82f6';
+      if (document.getElementById('salesChartTitle')) document.getElementById('salesChartTitle').textContent = selYear + ' Aylık Ciro';
+    } else if (chartType === 'qty') {
+      data = monthly.map(m => m.qty); label = 'Satış Adedi'; color = '#8b5cf6';
+      if (document.getElementById('salesChartTitle')) document.getElementById('salesChartTitle').textContent = selYear + ' Aylık Satış Adedi';
+    } else {
+      data = monthly.map(m => calcMargin(m.revenue, m.cost)); label = 'Kar Marjı (%)'; color = '#10b981';
+      if (document.getElementById('salesChartTitle')) document.getElementById('salesChartTitle').textContent = selYear + ' Aylık Kar Marjı';
+    }
+
+    salesChartInstance = new Chart(canvas, {
+      type: 'bar',
+      data: {
+        labels: MONTHS,
+        datasets: [{ label, data, backgroundColor: color + '99', borderColor: color, borderWidth: 1, borderRadius: 4 }]
+      },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: false } },
+        scales: { y: { beginAtZero: true, ticks: { callback: v => chartType === 'margin' ? v.toFixed(1)+'%' : fmtTL(v) } } }
+      }
+    });
+
+  // ---------- YILLIK KARŞILAŞTIRMA ----------
+  } else {
+    // Tüm yılları bul
+    const years = [...new Set(state.sales.map(s => s.year))].sort();
+    if (!years.length) years.push(new Date().getFullYear());
+
+    const YEAR_COLORS = ['#3b82f6','#10b981','#f59e0b','#ef4444','#8b5cf6','#ec4899'];
+
+    const datasets = years.map((yr, i) => {
+      const monthly = Array(12).fill(0).map((_, mi) => ({ revenue: 0, qty: 0, cost: 0 }));
+      filterSales(state.sales.filter(s => s.year === yr)).forEach(s => {
+        const m = monthly[s.month - 1];
+        m.revenue += s.revenue || 0;
+        m.qty     += s.qty || 0;
+        m.cost    += getSalesCost(s);
+      });
+      const color = YEAR_COLORS[i % YEAR_COLORS.length];
+      let data;
+      if (chartType === 'revenue')     data = monthly.map(m => m.revenue);
+      else if (chartType === 'qty')    data = monthly.map(m => m.qty);
+      else                             data = monthly.map(m => calcMargin(m.revenue, m.cost));
+      return { label: String(yr), data, backgroundColor: color + '88', borderColor: color, borderWidth: 1, borderRadius: 3 };
+    });
+
+    const titleMap = { revenue: 'Yıllık Ciro Karşılaştırması', qty: 'Yıllık Satış Adedi Karşılaştırması', margin: 'Yıllık Kar Marjı Karşılaştırması' };
+    if (document.getElementById('salesChartTitle')) document.getElementById('salesChartTitle').textContent = titleMap[chartType] || 'Yıllık Karşılaştırma';
+
+    salesChartInstance = new Chart(canvas, {
+      type: 'bar',
+      data: { labels: MONTHS, datasets },
+      options: {
+        responsive: true,
+        plugins: { legend: { display: true, position: 'top' } },
+        scales: { y: { beginAtZero: true, ticks: { callback: v => chartType === 'margin' ? v.toFixed(1)+'%' : fmtTL(v) } } }
+      }
+    });
+  }
+}
+
+function renderSalesGroupPie() {
+  const year = parseInt(document.getElementById('s_filter_year')?.value) || new Date().getFullYear();
+  const yearSales = state.sales.filter(s => s.year === year && !s.no_stock);
+
+  // Gruplara göre ciro topla
+  const byGroup = {};
+  yearSales.forEach(s => {
+    const p = state.products.find(x => x.id === s.productId);
+    if (!p) return;
+    const grp = p.group;
+    byGroup[grp] = (byGroup[grp] || 0) + (s.revenue || 0);
+  });
+
+  const entries = Object.entries(byGroup).filter(([,v]) => v > 0).sort((a,b) => b[1]-a[1]);
+
+  const canvas = document.getElementById('salesGroupPieChart');
+  const legend = document.getElementById('salesGroupPieLegend');
+  if (!canvas) return;
+
+  destroyChart('salesGroupPie');
+
+  if (!entries.length) {
+    if (legend) legend.innerHTML = '<span class="text-slate-400 text-xs">Henüz satış verisi yok</span>';
+    // canvas'ı temizle ama silme
+    const ctx2 = canvas.getContext('2d');
+    ctx2.clearRect(0, 0, canvas.width, canvas.height);
+    return;
+  }
+
+  const COLORS = {
+    tiras_makinesi: '#3b82f6',
+    duzlestirici_masa: '#ec4899',
+    firca: '#10b981',
+    makas: '#f59e0b',
+    pens: '#8b5cf6',
+    jilet: '#ef4444',
+    diger: '#64748b',
+  };
+
+  const labels = entries.map(([gid]) => {
+    const cat = getCategoryById(gid);
+    return cat ? cat.name : gid;
+  });
+  const data = entries.map(([,v]) => v);
+  const colors = entries.map(([gid]) => COLORS[gid] || '#94a3b8');
+
+  charts['salesGroupPie'] = new Chart(canvas, {
+    type: 'doughnut',
     data: {
-      labels: MONTHS,
-      datasets: [{ label, data, backgroundColor: color + '99', borderColor: color, borderWidth: 1, borderRadius: 4 }]
+      labels,
+      datasets: [{ data, backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }]
     },
     options: {
-      responsive: true,
-      plugins: { legend: { display: false } },
-      scales: { y: { beginAtZero: true, ticks: { callback: v => chartType === 'margin' ? v.toFixed(1)+'%' : fmtTL2(v) } } }
+      maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => {
+              const total = data.reduce((a,b) => a+b, 0);
+              const pct = total > 0 ? (ctx.raw / total * 100).toFixed(1) : 0;
+              return ' ' + fmtTL2(ctx.raw) + ' (' + pct + '%)';
+            }
+          }
+        }
+      }
     }
   });
+
+  if (legend) {
+    const total = data.reduce((a,b) => a+b, 0);
+    legend.innerHTML = entries.map(([gid, val], i) => {
+      const pct = total > 0 ? (val / total * 100).toFixed(0) : 0;
+      return '<span class="flex items-center gap-1"><span style="width:10px;height:10px;border-radius:2px;background:' + colors[i] + ';display:inline-block;"></span>' +
+        '<span class="text-slate-600">' + labels[i] + '</span>' +
+        '<span class="font-semibold text-slate-800">' + pct + '%</span></span>';
+    }).join('');
+  }
 }
+
+
 
 function renderTopSellers() {
   const year = parseInt(document.getElementById('s_filter_year')?.value) || new Date().getFullYear();
@@ -2531,14 +2757,15 @@ function renderSalesTable() {
     const profit = (s.revenue||0) - totalCost;
     const margin = s.revenue > 0 ? (profit / s.revenue * 100) : 0;
     const marginColor = margin >= 50 ? 'text-green-700' : margin >= 30 ? 'text-amber-700' : 'text-red-700';
-    return `<tr class="border-t border-slate-100 hover:bg-slate-50">
-      <td class="px-3 py-2 font-medium text-slate-800">${name}</td>
+    const noStockBadge = s.no_stock ? '<span class="inline-block bg-amber-100 text-amber-700 text-[10px] px-1.5 py-0.5 rounded ml-1">stok yok</span>' : '';
+    return `<tr class="border-t border-slate-100 hover:bg-slate-50 ${s.no_stock ? 'opacity-60' : ''}">
+      <td class="px-3 py-2 font-medium text-slate-800">${name}${noStockBadge}</td>
       <td class="px-3 py-2 text-slate-600">${MONTHS[s.month-1]} ${s.year}</td>
-      <td class="px-3 py-2 num">${s.qty||0} ad</td>
-      <td class="px-3 py-2 num font-semibold">${fmtTL2(s.revenue||0)}</td>
+      <td class="px-3 py-2 num">${s.no_stock ? '<span class="text-amber-600">—</span>' : (s.qty||0) + ' ad'}</td>
+      <td class="px-3 py-2 num font-semibold">${s.no_stock ? '—' : fmtTL2(s.revenue||0)}</td>
       <td class="px-3 py-2 num text-slate-500">${s.qty ? fmtTL2((s.revenue||0)/(s.qty)) : '—'}</td>
       <td class="px-3 py-2 num text-slate-500">${fmtTL2(totalCost)}</td>
-      <td class="px-3 py-2 num font-semibold ${marginColor}">${margin.toFixed(1)}%</td>
+      <td class="px-3 py-2 num font-semibold ${marginColor}">${s.no_stock ? '—' : margin.toFixed(1)+'%'}</td>
       <td class="px-3 py-2"><button onclick="deleteSalesEntry(${i})" class="text-red-400 hover:text-red-700 text-xs">Sil</button></td>
     </tr>`;
   }).join('');
@@ -2548,32 +2775,35 @@ function saveSalesEntry() {
   const pid = document.getElementById('s_product').value;
   const month = parseInt(document.getElementById('s_month').value);
   const year = parseInt(document.getElementById('s_year').value);
-  const qty = parseInt(document.getElementById('s_qty').value) || 0;
-  const revenue = parseFloat(document.getElementById('s_revenue').value) || 0;
+  const noStock = document.getElementById('s_no_stock')?.checked || false;
+  const qty = noStock ? 0 : (parseInt(document.getElementById('s_qty').value) || 0);
+  const revenue = noStock ? 0 : (parseFloat(document.getElementById('s_revenue').value) || 0);
 
-  if (!pid || !qty) { alert('Ürün ve adet zorunlu!'); return; }
+  if (!pid) { alert('Ürün seçmelisin!'); return; }
+  if (!noStock && !qty) { alert('Satış adedi girilmeli ya da "stok yok" seçilmeli!'); return; }
 
   // Aynı ürün + ay + yıl varsa üzerine yaz
   const existing = state.sales.findIndex(s => s.productId === pid && s.month === month && s.year === year);
-  const entry = { id: 'sale_'+Date.now(), productId: pid, month, year, qty, revenue };
+  const entry = { id: 'sale_'+Date.now(), productId: pid, month, year, qty, revenue, no_stock: noStock };
 
   if (existing >= 0) {
     const old = state.sales[existing];
-    // Stoku geri ver, yenisini düş
     const p = state.products.find(x => x.id === pid);
-    if (p) { p.stock_qty = (p.stock_qty||0) + (old.qty||0) - qty; }
+    if (p && !noStock) { p.stock_qty = (p.stock_qty||0) + (old.qty||0) - qty; }
     state.sales[existing] = entry;
   } else {
-    // Stoktan düş
     const p = state.products.find(x => x.id === pid);
-    if (p) { p.stock_qty = Math.max(0, (p.stock_qty||0) - qty); }
+    if (p && !noStock) { p.stock_qty = Math.max(0, (p.stock_qty||0) - qty); }
     state.sales.push(entry);
   }
 
   persist();
   document.getElementById('s_qty').value = '';
   document.getElementById('s_revenue').value = '';
-  renderSalesTab();
+  if (document.getElementById('s_no_stock')) document.getElementById('s_no_stock').checked = false;
+  document.getElementById('s_qty_row')?.classList.remove('opacity-40');
+  document.getElementById('s_revenue_row')?.classList.remove('opacity-40');
+  applySalesFilters();
   renderProducts();
 }
 
@@ -2611,15 +2841,31 @@ document.addEventListener('DOMContentLoaded', () => {
     const reader = new FileReader();
     reader.onload = (ev) => {
       const lines = ev.target.result.split('\n').filter(l => l.trim());
+      // Otomatik format algıla: yeni format (4 kolon: isim,satılan,iade,tutar) veya eski (5 kolon: isim,ay,yıl,adet,tutar)
+      const firstDataLine = lines[1] || '';
+      const firstCols = firstDataLine.split(',');
+      const isNewFormat = firstCols.length === 4 || (lines[0] || '').includes('Satılan Miktar');
+      const now = new Date();
+      const curMonth = now.getMonth() + 1;
+      const curYear = now.getFullYear();
       parsedCsvRows = lines.slice(1).map(line => {
         const cols = line.split(',').map(c => c.trim().replace(/"/g,''));
-        return { name: cols[0], month: parseInt(cols[1]), year: parseInt(cols[2]), qty: parseInt(cols[3]), revenue: parseFloat(cols[4]) };
-      }).filter(r => r.name && r.month && r.year && r.qty);
+        if (isNewFormat) {
+          // Yeni format: Stok İsmi, Satılan Miktar, İade Edilen Miktar, Satış (TL)
+          const sold = parseInt(cols[1]) || 0;
+          const returned = parseInt(cols[2]) || 0;
+          const netQty = Math.max(0, sold - returned);
+          return { name: cols[0], month: curMonth, year: curYear, qty: netQty, revenue: parseFloat(cols[3]) || 0 };
+        } else {
+          // Eski format: Ürün Adı, Ay, Yıl, Adet, Tutar
+          return { name: cols[0], month: parseInt(cols[1]), year: parseInt(cols[2]), qty: parseInt(cols[3]), revenue: parseFloat(cols[4]) };
+        }
+      }).filter(r => r.name && r.qty > 0);
 
-      document.getElementById('csvPreviewTitle').textContent = `${parsedCsvRows.length} kayıt bulundu`;
-      document.getElementById('csvPreviewTable').innerHTML = `<table class="w-full"><thead><tr class="text-slate-500"><th class="text-left">Ürün</th><th>Ay</th><th>Yıl</th><th>Adet</th><th>Tutar</th></tr></thead><tbody>` +
-        parsedCsvRows.slice(0,5).map(r => `<tr><td>${r.name}</td><td>${r.month}</td><td>${r.year}</td><td>${r.qty}</td><td>${r.revenue}</td></tr>`).join('') +
-        (parsedCsvRows.length > 5 ? `<tr><td colspan="5" class="text-slate-400">...ve ${parsedCsvRows.length-5} kayıt daha</td></tr>` : '') +
+      document.getElementById('csvPreviewTitle').textContent = parsedCsvRows.length + ' kayıt bulundu';
+      document.getElementById('csvPreviewTable').innerHTML = '<table class="w-full"><thead><tr class="text-slate-500 text-left"><th>Ürün</th><th>Ay/Yıl</th><th>Net Adet</th><th>Tutar</th></tr></thead><tbody>' +
+        parsedCsvRows.slice(0,5).map(r => '<tr><td class="py-0.5">' + r.name + '</td><td>' + r.month + '/' + r.year + '</td><td>' + r.qty + '</td><td>' + r.revenue + '</td></tr>').join('') +
+        (parsedCsvRows.length > 5 ? '<tr><td colspan="4" class="text-slate-400">...ve ' + (parsedCsvRows.length-5) + ' kayıt daha</td></tr>' : '') +
         '</tbody></table>';
       document.getElementById('csvPreview').classList.remove('hidden');
     };
@@ -2650,8 +2896,8 @@ function importSalesCsv() {
 }
 
 function downloadSalesCsvTemplate() {
-  const header = 'Ürün Adı,Ay,Yıl,Adet,Tutar (TL)';
-  const example = state.products.slice(0,3).map(p => `${p.name},1,2026,10,5000`).join('\n') || 'LINEAR X,1,2026,10,5000';
+  const header = 'Stok İsmi,Satılan Miktar,İade Edilen Miktar,Satış (TL)';
+  const example = state.products.slice(0,3).map(p => p.name + ',10,0,5000').join('\n') || 'HAWK X,10,0,5000';
   const blob = new Blob([header + '\n' + example], { type: 'text/csv;charset=utf-8;' });
   const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = 'satis-sablonu.csv'; a.click();
 }
@@ -2675,7 +2921,7 @@ function exportSalesExcel() {
 
 
 // ============================================================
-// YURTDIŞI FİYATLARI (BEYZA HANIM)
+// YURTDIŞI FİYATLARI 
 // ============================================================
 
 function renderExpPricesTab() {
