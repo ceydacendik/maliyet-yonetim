@@ -129,49 +129,87 @@
         <div class="text-right">
           <div class="text-[10px] uppercase tracking-wider text-slate-400">Bugünkü USD/EUR</div>
           <div class="text-sm font-semibold" id="homeRates">—</div>
+          <button id="homeExportBtn" class="mt-2 pill-btn bg-white/10 hover:bg-white/20 text-white border border-white/20 text-xs">⬇ Yönetici Raporu (Excel)</button>
         </div>
       </div>
     </div>
 
-    <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3 mb-4" id="homeStatCards"></div>
+    <!-- KPI kartları -->
+    <div class="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-3 mb-4" id="homeStatCards"></div>
 
+    <!-- Uyarı Merkezi -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-4">
+      <div class="mb-3">
+        <h3 class="text-base font-bold text-slate-900">🚨 Uyarı Merkezi</h3>
+        <p class="text-xs text-slate-500">Yönetimin bugün aksiyon alması gereken konular — fiyat, kur, stok, sipariş ve servis</p>
+      </div>
+      <div id="homeAlerts" class="space-y-2"></div>
+    </div>
+
+    <!-- Grafikler -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
       <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-        <h3 class="text-base font-bold text-slate-900 mb-1">📈 Son 6 Ay Ciro</h3>
-        <p class="text-xs text-slate-500 mb-3">Tüm ürünler toplamı, aylık</p>
-        <div style="height: 220px;"><canvas id="chartHomeRevenue"></canvas></div>
+        <h3 class="text-base font-bold text-slate-900 mb-1">📈 Aylık Ciro & Kar Trendi</h3>
+        <p class="text-xs text-slate-500 mb-3" id="homeTrendSubtitle">Satış Takibi verilerinden, içinde bulunulan yıl</p>
+        <div style="height: 260px;"><canvas id="chartHomeRevenue"></canvas></div>
       </div>
       <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-        <h3 class="text-base font-bold text-slate-900 mb-1">🔻 En Az Satan Ürünler</h3>
-        <p class="text-xs text-slate-500 mb-3">Son 6 ay, satış adedine göre — stoklu ürünler arasında</p>
-        <div id="homeBottomSellers" class="space-y-2"></div>
+        <h3 class="text-base font-bold text-slate-900 mb-1">📊 Grup Bazlı Ortalama Kar Marjı</h3>
+        <p class="text-xs text-slate-500 mb-3">Aktif satış fiyatı olan ürünler · kırmızı çubuklar min. kar hedefinin altında</p>
+        <div style="height: 260px;"><canvas id="chartHomeGroupMargin"></canvas></div>
       </div>
     </div>
 
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+    <!-- Top 5 · En Az Satan · Kur Simülasyonu -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 mb-4">
       <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-        <h3 class="text-base font-bold text-slate-900 mb-1">🚚 Satın Alma Durumu</h3>
-        <p class="text-xs text-slate-500 mb-3">Yaklaşan ve geciken siparişler</p>
-        <div id="homePurchasingStatus" class="space-y-2"></div>
+        <h3 class="text-base font-bold text-slate-900 mb-1">🏆 En Karlı 5 Ürün</h3>
+        <p class="text-xs text-slate-500 mb-3">Yıllık kar projeksiyonu: aylık satış tahmini × birim kar × 12</p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead><tr>
+              <th class="px-2 py-2 text-left">Ürün</th>
+              <th class="px-2 py-2 num">Marj %</th>
+              <th class="px-2 py-2 num">Yıllık Kar</th>
+            </tr></thead>
+            <tbody id="homeTopProducts"></tbody>
+          </table>
+        </div>
       </div>
       <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-        <h3 class="text-base font-bold text-slate-900 mb-1">⚠ Kritik Ürünler</h3>
-        <p class="text-xs text-slate-500 mb-3">Minimum marjın altındaki ürünler</p>
-        <div id="homeCriticalProducts" class="space-y-2"></div>
+        <h3 class="text-base font-bold text-slate-900 mb-1">🐢 En Az Satan 5 Ürün</h3>
+        <p class="text-xs text-slate-500 mb-3">Son 6 ay, stokta bekleyenler · kampanya ve satış ekibi yönlendirmesi için</p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead><tr>
+              <th class="px-2 py-2 text-left">Ürün</th>
+              <th class="px-2 py-2 num">6 Ay Satış</th>
+              <th class="px-2 py-2 num">Stok</th>
+              <th class="px-2 py-2 num">Bağlı Sermaye</th>
+            </tr></thead>
+            <tbody id="homeLeastProducts"></tbody>
+          </table>
+        </div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="text-base font-bold text-slate-900 mb-1">💱 Kur Duyarlılık Simülasyonu</h3>
+        <p class="text-xs text-slate-500 mb-3">Kurlar değişirse aylık kar ve marj yapısı nasıl etkilenir? TL fiyatlılarda fiyat sabit, döviz fiyatlılarda kurla hareket eder.</p>
+        <div class="flex items-center gap-3 mb-3">
+          <span class="text-xs text-slate-500 whitespace-nowrap">-20%</span>
+          <input type="range" id="homeSimSlider" min="-20" max="20" step="1" value="0" class="flex-1 accent-slate-900">
+          <span class="text-xs text-slate-500 whitespace-nowrap">+20%</span>
+        </div>
+        <div class="text-center mb-3">
+          <span class="text-sm text-slate-600">Kur şoku: </span>
+          <span class="text-lg font-bold text-slate-900" id="homeSimLabel">0%</span>
+        </div>
+        <div id="homeSimResult" class="grid grid-cols-1 gap-2"></div>
       </div>
     </div>
 
     <div class="mb-4">
       <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Hızlı Erişim</h3>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="homeQuickNav"></div>
-    </div>
-
-    <div class="bg-white rounded-xl shadow-sm border border-dashed border-slate-300 p-4 flex items-center gap-3">
-      <div class="text-2xl">🚧</div>
-      <div>
-        <div class="text-sm font-semibold text-slate-700">Yakında: Finansal Raporlar</div>
-        <div class="text-xs text-slate-500 mt-0.5">Gelir/kârlılık, bütçe karşılaştırma ve hammadde/stok raporları bu panele eklenecek.</div>
-      </div>
     </div>
   </section>
 
@@ -383,27 +421,14 @@
       </div>
     </div>
 
-    <!-- Currency Risk Table -->
+    <!-- ABC / Pareto Analizi -->
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-4">
-      <h3 class="text-base font-bold text-slate-900 mb-1">⚠ Kur Riski — Maliyeti Şişen Ürünler</h3>
-      <p class="text-xs text-slate-500 mb-3">Alış kuru ile güncel TCMB kuru arasındaki fark %5'in üzerinde olan ürünler. Bu ürünleri yeniden almak için bugün daha fazla TL ödersin.</p>
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead>
-            <tr>
-              <th class="px-3 py-2 text-left">Ürün</th>
-              <th class="px-3 py-2 text-left">Grup</th>
-              <th class="px-3 py-2 num">Alış Kuru</th>
-              <th class="px-3 py-2 num">Güncel Kur</th>
-              <th class="px-3 py-2 num">Fark</th>
-              <th class="px-3 py-2 num">Eski Maliyet</th>
-              <th class="px-3 py-2 num">Bugünkü Maliyet</th>
-              <th class="px-3 py-2 num">Etki</th>
-            </tr>
-          </thead>
-          <tbody id="riskTbody"></tbody>
-        </table>
-      </div>
+      <h3 class="text-base font-bold text-slate-900 mb-1">🔬 ABC / Pareto Analizi — Ciro Konsantrasyonu</h3>
+      <p class="text-xs text-slate-500 mb-3" id="abcSubtitle">Hangi ürünler cironun büyük kısmını üretiyor? A: kümülatif %80'e kadar · B: %80–95 · C: kalan kuyruk</p>
+      <div id="abcCards" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4"></div>
+      <div id="abcInsight" class="text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 mb-4"></div>
+      <div style="height: 320px;"><canvas id="chartAbcPareto"></canvas></div>
+      <p class="text-[11px] text-slate-400 mt-2">Çubuklar: ürün bazlı ciro (ilk 15 ürün) · Çizgi: kümülatif ciro payı % · Renkler ABC sınıfını gösterir.</p>
     </div>
 
     <!-- Margin Trend -->
@@ -477,6 +502,48 @@
         </table>
       </div>
     </div>
+
+    <!-- ===== TEKNİK SERVİS ANALİZİ ===== -->
+    <h2 class="text-lg font-bold text-slate-900 mb-3 mt-6">🔧 Teknik Servis Analizi</h2>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4" id="svcSummaryCards"></div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="text-base font-bold text-slate-900 mb-1">Aylık Servis Yükü & Net Sonuç</h3>
+        <p class="text-xs text-slate-500 mb-3" id="svcMonthlySubtitle">Geliş tarihine göre, cari yıl · çubuk: kayıt adedi · çizgi: net sonuç (alınan ücret − parça − kargo)</p>
+        <div style="height: 260px;"><canvas id="chartSvcMonthly"></canvas></div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="text-base font-bold text-slate-900 mb-1">En Çok Kullanılan Yedek Parçalar</h3>
+        <p class="text-xs text-slate-500 mb-3">Cari yıl, adet bazında ilk 8 · arıza kök nedeni ve stok planlaması için</p>
+        <div style="height: 260px;"><canvas id="chartSvcParts"></canvas></div>
+      </div>
+    </div>
+
+    <!-- Currency Risk Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-4">
+      <h3 class="text-base font-bold text-slate-900 mb-1">⚠ Kur Riski — Maliyeti Şişen Ürünler</h3>
+      <p class="text-xs text-slate-500 mb-3">Alış kuru ile güncel TCMB kuru arasındaki fark %5'in üzerinde olan ürünler. Bu ürünleri yeniden almak için bugün daha fazla TL ödersin.</p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr>
+              <th class="px-3 py-2 text-left">Ürün</th>
+              <th class="px-3 py-2 text-left">Grup</th>
+              <th class="px-3 py-2 num">Alış Kuru</th>
+              <th class="px-3 py-2 num">Güncel Kur</th>
+              <th class="px-3 py-2 num">Fark</th>
+              <th class="px-3 py-2 num">Eski Maliyet</th>
+              <th class="px-3 py-2 num">Bugünkü Maliyet</th>
+              <th class="px-3 py-2 num">Etki</th>
+            </tr>
+          </thead>
+          <tbody id="riskTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
   </section>
 
   <section id="tab-categories" class="tab-content hidden">
@@ -2389,6 +2456,7 @@ function renderTrendChart() {
 
 function renderAll() {
   renderHome();
+  runHomeRateSimulation();
   renderRateBar();
   renderProducts();
   renderPurchasing();
@@ -2396,6 +2464,8 @@ function renderAll() {
   renderSettings();
   renderHistory();
   renderAnalytics();
+  renderAbcAnalysis();
+  renderServiceAnalyticsSummary();
   renderSalesTab();
   renderServiceTab();
   renderExpPricesTab();
@@ -2432,53 +2502,136 @@ function renderHome() {
   const usd = state.settings.current_usd, eur = state.settings.current_eur;
   if (ratesEl) ratesEl.textContent = `${fmtNum(usd,2)} ₺ / ${fmtNum(eur,2)} ₺`;
 
-  // İstatistik kartları
-  const allCalcs = state.products.map(p => calculate(p));
-  const totalProducts = state.products.length;
-  const warnCount = allCalcs.filter(c => c.below_min).length;
-  const stockValueTL = allCalcs.reduce((s,c) => s + c.stock_value_tl, 0);
+  // ---- Panel verisi ----
+  const year = new Date().getFullYear();
+  const allCalcs = state.products.map(p => ({ p, calc: calculate(p) }));
+  const totalStockTL = allCalcs.reduce((s, x) => s + x.calc.stock_value_tl, 0);
+  const monthlyProfitProj = allCalcs.reduce((s, x) => s + x.calc.monthly_profit, 0);
+  const belowMin = allCalcs.filter(x => x.calc.below_min)
+    .sort((a,b) => (a.calc.active_price_tl - a.calc.min_sale_price) - (b.calc.active_price_tl - b.calc.min_sale_price));
+  const highRisk = allCalcs.filter(x => x.calc.currency_risk_level === 'high');
+  const medRisk  = allCalcs.filter(x => x.calc.currency_risk_level === 'medium');
+  const lowStock = allCalcs.filter(x => x.calc.stock_months != null && x.calc.stock_months < 1 && x.calc.monthly_sales > 0);
 
-  const now = new Date();
-  const thisMonthSales = state.sales.filter(s => s.month === now.getMonth()+1 && s.year === now.getFullYear());
-  const monthRevenue = thisMonthSales.reduce((s,x) => s + (x.revenue||0), 0);
+  const costMap = {};
+  allCalcs.forEach(x => { costMap[x.p.id] = x.calc.total_cost; });
+  const yearSales = (state.sales || []).filter(s => s.year === year);
+  let salesRevenue = 0, salesCost = 0, salesQty = 0;
+  yearSales.forEach(s => {
+    salesRevenue += (s.revenue || 0);
+    salesCost += (costMap[s.productId] || 0) * (s.qty || 0);
+    salesQty += (s.qty || 0);
+  });
+  const salesProfit = salesRevenue - salesCost;
+  const salesMargin = salesRevenue > 0 ? salesProfit / salesRevenue : 0;
 
-  const openPOs = state.purchase_orders.filter(o => !['received','cancelled'].includes(o.status));
-  const delayedPOs = state.purchase_orders.filter(o => poDelayDays(o) > 0);
+  const yearService = (state.service || []).filter(s => (s.date_arrival || '').startsWith(String(year)));
+  let svcLossCount = 0;
+  yearService.forEach(s => {
+    const net = (s.charged || 0) - (s.part_cost || 0) - (s.labor_cost || 0);
+    if (net < 0 && !s.warranty) svcLossCount++;
+  });
 
+  const delayedPOs = (state.purchase_orders || [])
+    .filter(o => !['received','cancelled'].includes(o.status))
+    .map(o => ({ o, delay: poDelayDays(o) }))
+    .filter(x => x.delay > 0)
+    .sort((a,b) => b.delay - a.delay);
+
+  // ---- KPI kartları ----
+  const kpi = (label, value, sub, color = 'text-slate-900') => `
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+      <div class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">${label}</div>
+      <div class="text-xl font-bold ${color} num">${value}</div>
+      <div class="text-xs text-slate-500 mt-0.5">${sub || ''}</div>
+    </div>`;
   const cardsEl = document.getElementById('homeStatCards');
   if (cardsEl) {
-    cardsEl.innerHTML = `
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-        <div class="text-xs text-slate-500 uppercase tracking-wider">Toplam Ürün</div>
-        <div class="text-2xl font-bold text-slate-900 mt-1">${totalProducts}</div>
-      </div>
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-        <div class="text-xs text-slate-500 uppercase tracking-wider">⚠ %50 Altında</div>
-        <div class="text-2xl font-bold text-red-600 mt-1">${warnCount}</div>
-      </div>
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-        <div class="text-xs text-slate-500 uppercase tracking-wider">Bu Ay Ciro</div>
-        <div class="text-2xl font-bold text-emerald-600 mt-1">${fmtTL(monthRevenue)}</div>
-      </div>
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-        <div class="text-xs text-slate-500 uppercase tracking-wider">Toplam Stok Değeri</div>
-        <div class="text-2xl font-bold text-slate-900 mt-1">${fmtTL(stockValueTL)}</div>
-      </div>
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-        <div class="text-xs text-slate-500 uppercase tracking-wider">🛒 Açık Sipariş</div>
-        <div class="text-2xl font-bold text-blue-600 mt-1">${openPOs.length}</div>
-      </div>
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-        <div class="text-xs text-slate-500 uppercase tracking-wider">🚚 Geciken Sipariş</div>
-        <div class="text-2xl font-bold ${delayedPOs.length ? 'text-red-600' : 'text-slate-900'} mt-1">${delayedPOs.length}</div>
-      </div>
-    `;
+    cardsEl.innerHTML =
+      kpi('💰 Stok Sermayesi', fmtTL(totalStockTL), state.products.length + ' ürün') +
+      kpi(`📈 ${year} Ciro`, fmtTL(salesRevenue), salesQty.toLocaleString('tr-TR') + ' adet satış') +
+      kpi(`💵 ${year} Kar`, fmtTL(salesProfit), 'Marj: ' + fmtPct(salesMargin), salesProfit >= 0 ? 'text-emerald-700' : 'text-red-600') +
+      kpi('🎯 Aylık Kar Projeksiyonu', fmtTL(monthlyProfitProj), 'Satış tahminlerine göre', 'text-emerald-700') +
+      kpi('⚠️ Fiyatı Min. Altında', belowMin.length + ' ürün', belowMin.length ? 'Acil fiyat revizyonu' : 'Sorun yok', belowMin.length ? 'text-red-600' : 'text-emerald-700') +
+      kpi('💱 Yüksek Kur Riski', highRisk.length + ' ürün', medRisk.length + ' üründe orta risk', highRisk.length ? 'text-amber-600' : 'text-emerald-700');
   }
 
+  // ---- Uyarı Merkezi ----
+  const alertsEl = document.getElementById('homeAlerts');
+  if (alertsEl) {
+    const alerts = [];
+    belowMin.slice(0, 5).forEach(x => alerts.push({
+      icon: '🔴', cls: 'bg-red-50 border-red-200 text-red-800',
+      text: `<strong>${escapeHtml(x.p.name)}</strong> — aktif fiyat (${fmtTL(x.calc.active_price_tl)}) minimum satış fiyatının (${fmtTL(x.calc.min_sale_price)}) altında. Fark: ${fmtTL(x.calc.min_sale_price - x.calc.active_price_tl)}`,
+    }));
+    if (belowMin.length > 5) alerts.push({ icon: '🔴', cls: 'bg-red-50 border-red-200 text-red-800', text: `+ ${belowMin.length - 5} ürün daha minimum fiyatın altında (Ürünler sekmesinde "Uyarılı" filtresini kullan).` });
+    delayedPOs.slice(0, 3).forEach(({o, delay}) => {
+      const sup = getSupplierById(o.supplier_id);
+      alerts.push({
+        icon: '🚚', cls: 'bg-orange-50 border-orange-200 text-orange-800',
+        text: `Sipariş <strong>${escapeHtml(o.po_no || '—')}</strong> (${sup ? escapeHtml(sup.name) : '—'}) <strong>${delay} gün gecikti</strong>. Beklenen teslim: ${o.expected_delivery || '—'}`,
+      });
+    });
+    highRisk.slice(0, 3).forEach(x => alerts.push({
+      icon: '🟠', cls: 'bg-amber-50 border-amber-200 text-amber-800',
+      text: `<strong>${escapeHtml(x.p.name)}</strong> — alış kuru ${fmtRate(x.p.purchase_rate)} iken güncel kur ${fmtRate(x.calc.current_rate_for_currency)} (${fmtPct(x.calc.currency_risk_pct)} sapma). Yenileme maliyeti çıplak bazda ${fmtTL(x.calc.cost_diff_tl)} artacak.`,
+    }));
+    lowStock.slice(0, 3).forEach(x => alerts.push({
+      icon: '📦', cls: 'bg-blue-50 border-blue-200 text-blue-800',
+      text: `<strong>${escapeHtml(x.p.name)}</strong> — stok ${x.calc.stock_qty} adet, aylık satış tahmini ${x.calc.monthly_sales} adet. Yaklaşık ${(x.calc.stock_months * 30).toFixed(0)} gün içinde stok tükeniyor.`,
+    }));
+    if (svcLossCount > 0) alerts.push({
+      icon: '🔧', cls: 'bg-purple-50 border-purple-200 text-purple-800',
+      text: `${year} yılında <strong>${svcLossCount} ücretli servis kaydı zararda</strong> (alınan ücret parça + kargo maliyetini karşılamıyor). Servis fiyat listesini gözden geçir.`,
+    });
+    alertsEl.innerHTML = alerts.length
+      ? alerts.map(a => `<div class="flex items-start gap-2 border rounded-lg px-3 py-2 text-sm ${a.cls}"><span>${a.icon}</span><div>${a.text}</div></div>`).join('')
+      : '<div class="text-sm text-emerald-700 bg-emerald-50 border border-emerald-200 rounded-lg px-3 py-2">✅ Aksiyon gerektiren kritik uyarı yok.</div>';
+  }
+
+  // ---- Grafikler ----
   renderHomeRevenueChart();
-  renderHomeBottomSellers();
-  renderHomePurchasingStatus();
-  renderHomeCriticalProducts();
+  renderHomeGroupMarginChart(allCalcs);
+
+  // ---- En Karlı 5 ----
+  const topEl = document.getElementById('homeTopProducts');
+  if (topEl) {
+    const top = allCalcs.filter(x => x.calc.annual_profit > 0)
+      .sort((a, b) => b.calc.annual_profit - a.calc.annual_profit).slice(0, 5);
+    topEl.innerHTML = top.length
+      ? top.map(x => `<tr class="ok-row">
+          <td class="px-2 py-2 font-medium text-slate-900">${escapeHtml(x.p.name)}<div class="text-[10px] text-slate-400">${escapeHtml(getCategoryById(x.p.group).name)}</div></td>
+          <td class="px-2 py-2 num ${x.calc.profit_pct >= state.settings.min_markup_pct / 100 ? 'text-emerald-700' : 'text-red-600'}">${fmtPct(x.calc.profit_pct)}</td>
+          <td class="px-2 py-2 num font-semibold">${fmtTL(x.calc.annual_profit)}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="3" class="px-2 py-4 text-center text-slate-400 text-sm">Ürünlere "Aylık Satış Tahmini" girildiğinde bu liste dolar.</td></tr>';
+  }
+
+  // ---- En Az Satan 5 (son 6 ay, stoklu ürünler) ----
+  const leastEl = document.getElementById('homeLeastProducts');
+  if (leastEl) {
+    const now = new Date();
+    const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+    const qtyByProduct = {};
+    state.sales.forEach(s => {
+      const d = new Date(s.year, s.month - 1, 1);
+      if (d < sixMonthsAgo) return;
+      qtyByProduct[s.productId] = (qtyByProduct[s.productId] || 0) + (s.qty || 0);
+    });
+    const least = allCalcs
+      .filter(x => (x.p.stock_qty || 0) > 0)
+      .map(x => ({ ...x, soldQty: qtyByProduct[x.p.id] || 0 }))
+      .sort((a, b) => (a.soldQty - b.soldQty) || (b.calc.stock_value_tl - a.calc.stock_value_tl))
+      .slice(0, 5);
+    leastEl.innerHTML = least.length
+      ? least.map(x => `<tr class="ok-row">
+          <td class="px-2 py-2 font-medium text-slate-900">${escapeHtml(x.p.name)}<div class="text-[10px] text-slate-400">${escapeHtml(getCategoryById(x.p.group).name)}</div></td>
+          <td class="px-2 py-2 num ${x.soldQty === 0 ? 'text-red-600 font-semibold' : ''}">${x.soldQty.toLocaleString('tr-TR')} ad</td>
+          <td class="px-2 py-2 num">${x.calc.stock_qty.toLocaleString('tr-TR')} ad</td>
+          <td class="px-2 py-2 num font-semibold">${fmtTL(x.calc.stock_value_tl)}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="4" class="px-2 py-4 text-center text-slate-400 text-sm">Ürünlere "Stok Adedi" girildiğinde bu liste dolar.</td></tr>';
+  }
 
   // Hızlı erişim kartları
   const navEl = document.getElementById('homeQuickNav');
@@ -2502,113 +2655,89 @@ function renderHomeRevenueChart() {
   if (typeof Chart === 'undefined') return;
   const canvas = document.getElementById('chartHomeRevenue');
   if (!canvas) return;
-  const now = new Date();
-  const months = [];
-  for (let i = 5; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    months.push({ m: d.getMonth()+1, y: d.getFullYear(), label: MONTHS[d.getMonth()].slice(0,3) });
-  }
-  const data = months.map(mo => state.sales.filter(s => s.month === mo.m && s.year === mo.y).reduce((s,x) => s + (x.revenue||0), 0));
+  const year = new Date().getFullYear();
+  const sub = document.getElementById('homeTrendSubtitle');
+  if (sub) sub.textContent = `Satış Takibi verilerinden · ${year} · çubuk: ciro, çizgi: tahmini kar (ciro − adet × birim maliyet)`;
+
+  // Birim maliyetleri bir kez hesapla
+  const costMap = {};
+  state.products.forEach(p => { costMap[p.id] = calculate(p).total_cost; });
+
+  const revData = Array(12).fill(0), profitData = Array(12).fill(0);
+  state.sales.forEach(s => {
+    if (s.year !== year) return;
+    const i = (s.month || 1) - 1;
+    if (i < 0 || i > 11) return;
+    const rev = s.revenue || 0;
+    revData[i] += rev;
+    profitData[i] += rev - (costMap[s.productId] || 0) * (s.qty || 0);
+  });
 
   destroyChart('homeRevenue');
   charts.homeRevenue = new Chart(canvas, {
+    data: {
+      labels: MONTHS.map(mo => mo.slice(0, 3)),
+      datasets: [
+        { type: 'bar', label: 'Ciro (₺)', data: revData, backgroundColor: 'rgba(30, 41, 59, 0.8)', borderRadius: 4, order: 2 },
+        { type: 'line', label: 'Kar (₺)', data: profitData, borderColor: '#059669', backgroundColor: '#059669', tension: 0.3, pointRadius: 3, order: 1 },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: { callbacks: { label: (ctx) => ctx.dataset.label + ': ' + fmtTL(ctx.parsed.y) } },
+      },
+      scales: {
+        y: { ticks: { callback: (v) => new Intl.NumberFormat('tr-TR', { notation: 'compact' }).format(v) + ' ₺', font: { size: 10 } } },
+        x: { ticks: { font: { size: 10 } } },
+      },
+    },
+  });
+}
+
+function renderHomeGroupMarginChart(allCalcs) {
+  if (typeof Chart === 'undefined') return;
+  const canvas = document.getElementById('chartHomeGroupMargin');
+  if (!canvas) return;
+  const target = state.settings.min_markup_pct;
+
+  const groupMargins = state.categories.map(cat => {
+    const items = allCalcs.filter(x => x.p.group === cat.id && x.calc.active_price_tl > 0);
+    if (!items.length) return null;
+    const totalRev = items.reduce((s, x) => s + x.calc.monthly_revenue, 0);
+    const margin = totalRev > 0
+      ? items.reduce((s, x) => s + x.calc.profit_pct * x.calc.monthly_revenue, 0) / totalRev
+      : items.reduce((s, x) => s + x.calc.profit_pct, 0) / items.length;
+    return { name: cat.name, margin, count: items.length };
+  }).filter(Boolean);
+
+  destroyChart('homeGroupMargin');
+  charts.homeGroupMargin = new Chart(canvas, {
     type: 'bar',
-    data: { labels: months.map(m => m.label), datasets: [{ label: 'Ciro (TL)', data, backgroundColor: '#0ea5e9', borderRadius: 4 }] },
-    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    data: {
+      labels: groupMargins.map(g => g.name),
+      datasets: [{
+        label: 'Ort. Kar Marjı %',
+        data: groupMargins.map(g => +(g.margin * 100).toFixed(1)),
+        backgroundColor: groupMargins.map(g => g.margin * 100 >= target ? 'rgba(5, 150, 105, 0.8)' : 'rgba(220, 38, 38, 0.8)'),
+        borderRadius: 4,
+      }],
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: {
+          label: (ctx) => `Marj: %${ctx.parsed.x} · Hedef: %${target} · ${groupMargins[ctx.dataIndex].count} ürün`,
+        } },
+      },
+      scales: {
+        x: { ticks: { callback: (v) => '%' + v, font: { size: 10 } } },
+        y: { ticks: { font: { size: 11 } } },
+      },
+    },
   });
-}
-
-function renderHomeBottomSellers() {
-  const el = document.getElementById('homeBottomSellers');
-  if (!el) return;
-  const now = new Date();
-  const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
-
-  const qtyByProduct = {};
-  state.sales.forEach(s => {
-    const d = new Date(s.year, s.month - 1, 1);
-    if (d < sixMonthsAgo) return;
-    qtyByProduct[s.productId] = (qtyByProduct[s.productId] || 0) + (s.qty || 0);
-  });
-
-  // Sadece stoklu ürünleri değerlendir (stokta olmayanı "az satıyor" diye işaretlemek yanıltıcı olur)
-  const candidates = state.products
-    .filter(p => (p.stock_qty || 0) > 0)
-    .map(p => ({ p, qty: qtyByProduct[p.id] || 0 }))
-    .sort((a,b) => a.qty - b.qty)
-    .slice(0, 5);
-
-  if (!candidates.length) {
-    el.innerHTML = '<p class="text-sm text-slate-400 text-center py-6">Yeterli veri yok.</p>';
-    return;
-  }
-  const maxQty = Math.max(...candidates.map(c => c.qty), 1);
-  el.innerHTML = candidates.map(c => `
-    <div>
-      <div class="flex items-center justify-between text-xs mb-1">
-        <span class="text-slate-700 font-medium truncate">${escapeHtml(c.p.name)}</span>
-        <span class="text-slate-500 ml-2 whitespace-nowrap">${c.qty} ad / 6 ay</span>
-      </div>
-      <div class="h-1.5 bg-slate-100 rounded-full overflow-hidden">
-        <div class="h-full bg-red-400 rounded-full" style="width:${Math.max((c.qty/maxQty)*100, 3)}%"></div>
-      </div>
-    </div>
-  `).join('');
-}
-
-function renderHomePurchasingStatus() {
-  const el = document.getElementById('homePurchasingStatus');
-  if (!el) return;
-  const now = new Date();
-  const in14Days = new Date(now.getTime() + 14*86400000);
-
-  const relevant = state.purchase_orders
-    .filter(o => !['received','cancelled'].includes(o.status))
-    .map(o => ({ o, delay: poDelayDays(o) }))
-    .sort((a,b) => b.delay - a.delay)
-    .slice(0, 6);
-
-  if (!relevant.length) {
-    el.innerHTML = '<p class="text-sm text-slate-400 text-center py-6">Açık sipariş yok.</p>';
-    return;
-  }
-  el.innerHTML = relevant.map(({o, delay}) => {
-    const sup = getSupplierById(o.supplier_id);
-    const statusMeta = PO_STATUS_META[o.status] || PO_STATUS_META.draft;
-    return `<div class="flex items-center justify-between border-b border-slate-100 pb-2">
-      <div class="min-w-0">
-        <div class="text-sm font-medium text-slate-800 truncate">${escapeHtml(o.po_no||'—')} · ${sup ? escapeHtml(sup.name) : '—'}</div>
-        <div class="text-xs text-slate-500">Beklenen: ${o.expected_delivery || '—'}</div>
-      </div>
-      <div class="text-right whitespace-nowrap ml-2">
-        ${delay > 0 ? `<span class="text-xs px-2 py-0.5 rounded bg-red-100 text-red-700">${delay} gün gecikti</span>` : `<span class="text-xs px-2 py-0.5 rounded ${statusMeta.color}">${statusMeta.label}</span>`}
-      </div>
-    </div>`;
-  }).join('');
-}
-
-function renderHomeCriticalProducts() {
-  const el = document.getElementById('homeCriticalProducts');
-  if (!el) return;
-  const flagged = state.products
-    .map(p => ({ p, calc: calculate(p) }))
-    .filter(x => x.calc.below_min)
-    .sort((a,b) => (a.calc.active_price_tl - a.calc.min_sale_price) - (b.calc.active_price_tl - b.calc.min_sale_price))
-    .slice(0, 5);
-
-  if (!flagged.length) {
-    el.innerHTML = '<p class="text-sm text-slate-400 text-center py-6">Kritik ürün yok — tüm fiyatlar minimum marjın üzerinde. 🎉</p>';
-    return;
-  }
-  el.innerHTML = flagged.map(({p, calc}) => `
-    <div class="flex items-center justify-between border-b border-slate-100 pb-2">
-      <div class="min-w-0">
-        <div class="text-sm font-medium text-slate-800 truncate">${escapeHtml(p.name)}</div>
-        <div class="text-xs text-slate-500">Min. Satış: ${fmtTL(calc.min_sale_price)}</div>
-      </div>
-      <div class="text-sm font-semibold text-red-600 whitespace-nowrap ml-2">${fmtTL(calc.active_price_tl)}</div>
-    </div>
-  `).join('');
 }
 
 function openProductModal(idx) {
@@ -2937,6 +3066,299 @@ function escapeHtml(s) {
   return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
 }
 
+// ============================================================
+// KARAR DESTEK MODÜLÜ: ABC/Pareto · Kur Simülasyonu · Yönetici Raporu
+// ============================================================
+
+function renderAbcAnalysis() {
+  const cardsEl = document.getElementById('abcCards');
+  if (!cardsEl || typeof Chart === 'undefined') return;
+  const year = new Date().getFullYear();
+
+  // Ciro kaynağı: cari yıl gerçekleşen satış; hiç satış yoksa yıllık ciro projeksiyonu
+  const yearSales = (state.sales || []).filter(s => s.year === year);
+  const revMap = {};
+  yearSales.forEach(s => { revMap[s.productId] = (revMap[s.productId] || 0) + (s.revenue || 0); });
+  const hasSales = Object.values(revMap).some(v => v > 0);
+
+  const items = state.products.map(p => {
+    const c = calculate(p);
+    const revenue = hasSales ? (revMap[p.id] || 0) : c.annual_revenue;
+    return { p, c, revenue };
+  }).filter(x => x.revenue > 0).sort((a, b) => b.revenue - a.revenue);
+
+  document.getElementById('abcSubtitle').textContent = hasSales
+    ? `${year} gerçekleşen satış cirosuna göre · A: kümülatif %80'e kadar · B: %80–95 · C: kalan kuyruk`
+    : `Satış kaydı bulunmadığından yıllık ciro projeksiyonuna göre · A: %80 · B: %80–95 · C: kalan`;
+
+  if (!items.length) {
+    cardsEl.innerHTML = '';
+    document.getElementById('abcInsight').textContent = 'Analiz için satış kaydı veya ürünlerde aylık satış tahmini gerekli.';
+    destroyChart('abcPareto');
+    return;
+  }
+
+  const total = items.reduce((s, x) => s + x.revenue, 0);
+  let cum = 0;
+  items.forEach(x => {
+    cum += x.revenue;
+    x.cumPct = cum / total * 100;
+    x.cls = x.cumPct <= 80 ? 'A' : (x.cumPct <= 95 ? 'B' : 'C');
+  });
+  // En büyük ciro üreticisi tek başına %80'i aşsa bile tanım gereği A sınıfıdır
+  if (items.length && items[0].cls !== 'A') items[0].cls = 'A';
+
+  const byClass = { A: items.filter(x => x.cls === 'A'), B: items.filter(x => x.cls === 'B'), C: items.filter(x => x.cls === 'C') };
+  const clsColors = { A: '#059669', B: '#d97706', C: '#dc2626' };
+  const clsDesc = {
+    A: 'Ciro lokomotifleri — stok sürekliliği ve fiyat disiplini kritik',
+    B: "Orta segment — büyütme potansiyeli, kampanyayla A'ya taşınabilir",
+    C: 'Uzun kuyruk — sermaye bağlıyor, kampanya / rasyonalizasyon adayı',
+  };
+  cardsEl.innerHTML = ['A', 'B', 'C'].map(k => {
+    const arr = byClass[k];
+    const share = total > 0 ? arr.reduce((s, x) => s + x.revenue, 0) / total * 100 : 0;
+    return `<div class="border rounded-lg p-3" style="border-color:${clsColors[k]}40; background:${clsColors[k]}0d;">
+      <div class="flex items-baseline justify-between">
+        <span class="text-lg font-bold" style="color:${clsColors[k]}">${k} Sınıfı</span>
+        <span class="text-sm font-semibold text-slate-700">${arr.length} ürün</span>
+      </div>
+      <div class="text-sm font-bold text-slate-900 mt-1">Ciro payı: %${share.toFixed(1)}</div>
+      <div class="text-[11px] text-slate-500 mt-1">${clsDesc[k]}</div>
+    </div>`;
+  }).join('');
+
+  const aShare = byClass.A.reduce((s, x) => s + x.revenue, 0) / total * 100;
+  const aCntPct = (byClass.A.length / items.length * 100).toFixed(0);
+  document.getElementById('abcInsight').innerHTML =
+    `💡 <strong>Pareto özeti:</strong> Ürünlerin %${aCntPct}'i (${byClass.A.length} ürün) cironun %${aShare.toFixed(1)}'ini üretiyor. ` +
+    `${byClass.C.length} adet C sınıfı ürün toplam ${fmtTL(byClass.C.reduce((s, x) => s + x.c.stock_value_tl, 0))} stok sermayesi bağlıyor — kampanya ve satış ekibi yönlendirmesi için birincil adaylar.`;
+
+  destroyChart('abcPareto');
+  const top = items.slice(0, 15);
+  charts.abcPareto = new Chart(document.getElementById('chartAbcPareto'), {
+    data: {
+      labels: top.map(x => x.p.name.length > 22 ? x.p.name.slice(0, 20) + '…' : x.p.name),
+      datasets: [
+        { type: 'bar', label: 'Ciro (₺)', data: top.map(x => x.revenue),
+          backgroundColor: top.map(x => clsColors[x.cls] + 'cc'), borderRadius: 4, yAxisID: 'y', order: 2 },
+        { type: 'line', label: 'Kümülatif %', data: top.map(x => +x.cumPct.toFixed(1)),
+          borderColor: '#1e293b', backgroundColor: '#1e293b', tension: 0.2, pointRadius: 3, yAxisID: 'y1', order: 1 },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: { callbacks: {
+          label: (ctx) => ctx.dataset.yAxisID === 'y1'
+            ? `Kümülatif: %${ctx.parsed.y} · Sınıf: ${top[ctx.dataIndex].cls}`
+            : `Ciro: ${fmtTL(ctx.parsed.y)}`,
+        } },
+      },
+      scales: {
+        y:  { ticks: { callback: (v) => new Intl.NumberFormat('tr-TR', { notation: 'compact' }).format(v) + ' ₺', font: { size: 10 } } },
+        y1: { position: 'right', min: 0, max: 100, grid: { drawOnChartArea: false }, ticks: { callback: (v) => '%' + v, font: { size: 10 } } },
+        x:  { ticks: { font: { size: 9 }, maxRotation: 60, minRotation: 45 } },
+      },
+    },
+  });
+}
+
+function runHomeRateSimulation() {
+  const slider = document.getElementById('homeSimSlider');
+  const resultEl = document.getElementById('homeSimResult');
+  if (!slider || !resultEl) return;
+  const shock = parseInt(slider.value) / 100;
+  document.getElementById('homeSimLabel').textContent = (shock > 0 ? '+' : '') + (shock * 100).toFixed(0) + '%';
+
+  const minRatio = state.settings.min_markup_pct / 100;
+  let baseProfit = 0, simProfit = 0, simBelowMin = 0, baseBelowMin = 0;
+
+  state.products.forEach(p => {
+    const c = calculate(p);
+    if (c.active_price_tl <= 0) return;
+    const qty = c.monthly_sales || 0;
+
+    // Alış tarafı: döviz alımlı ürünlerde maliyet güncel kur × (1+şok) ile yeniden fiyatlanır.
+    // Tüm maliyet bileşenleri çıplak maliyetin yüzdesi olduğundan toplam maliyet kurla doğrusal ölçeklenir.
+    let simCost = c.total_cost;
+    if (p.purchase_currency !== 'TL' && c.used_rate > 0) {
+      simCost = c.total_cost * (c.current_rate_for_currency * (1 + shock)) / c.used_rate;
+    }
+    // Satış tarafı: TL fiyatlı ürünlerde fiyat sabit, döviz fiyatlı ürünlerde kurla hareket eder.
+    const simPrice = c.active_currency === 'TL' ? c.active_price_tl : c.active_price_tl * (1 + shock);
+
+    baseProfit += (c.active_price_tl - c.total_cost) * qty;
+    simProfit  += (simPrice - simCost) * qty;
+    if (c.total_cost > 0 && (c.active_price_tl - c.total_cost) / c.total_cost < minRatio) baseBelowMin++;
+    if (simCost > 0 && (simPrice - simCost) / simCost < minRatio) simBelowMin++;
+  });
+
+  const delta = simProfit - baseProfit;
+  const newBelow = simBelowMin - baseBelowMin;
+  const card = (label, value, sub, color) => `
+    <div class="border border-slate-200 rounded-lg p-3 text-center">
+      <div class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">${label}</div>
+      <div class="text-base font-bold ${color} num">${value}</div>
+      <div class="text-[11px] text-slate-500 mt-0.5">${sub || ''}</div>
+    </div>`;
+  resultEl.innerHTML =
+    card('Aylık Kar (Simüle)', fmtTL(simProfit), 'Mevcut: ' + fmtTL(baseProfit), simProfit >= baseProfit ? 'text-emerald-700' : 'text-red-600') +
+    card('Kar Etkisi', (delta >= 0 ? '+' : '') + fmtTL(delta), 'Aylık, satış tahminlerine göre', delta >= 0 ? 'text-emerald-700' : 'text-red-600') +
+    card('Marjı Hedefin Altına Düşen', simBelowMin + ' ürün', (newBelow > 0 ? '+' + newBelow + ' yeni ürün' : 'Değişim yok'), simBelowMin > baseBelowMin ? 'text-red-600' : 'text-slate-900');
+}
+
+function exportHomeReport() {
+  const year = new Date().getFullYear();
+  const allCalcs = state.products.map(p => ({ p, calc: calculate(p) }));
+  const totalStockTL = allCalcs.reduce((s, x) => s + x.calc.stock_value_tl, 0);
+
+  const costMap = {};
+  allCalcs.forEach(x => { costMap[x.p.id] = x.calc.total_cost; });
+  const yearSales = (state.sales || []).filter(s => s.year === year);
+  let rev = 0, cost = 0, qty = 0;
+  const mRev = Array(12).fill(0), mProfit = Array(12).fill(0);
+  yearSales.forEach(s => {
+    const r = s.revenue || 0, q = s.qty || 0;
+    const c = (costMap[s.productId] || 0) * q;
+    rev += r; cost += c; qty += q;
+    const i = (s.month || 1) - 1;
+    if (i >= 0 && i < 12) { mRev[i] += r; mProfit[i] += r - c; }
+  });
+  const profit = rev - cost;
+  const belowMin = allCalcs.filter(x => x.calc.below_min);
+  const highRisk = allCalcs.filter(x => x.calc.currency_risk_level === 'high');
+
+  // Son 6 ay en az satanlar (stoklu ürünler)
+  const now = new Date();
+  const sixMonthsAgo = new Date(now.getFullYear(), now.getMonth() - 5, 1);
+  const qtyByProduct = {};
+  state.sales.forEach(s => {
+    const d = new Date(s.year, s.month - 1, 1);
+    if (d < sixMonthsAgo) return;
+    qtyByProduct[s.productId] = (qtyByProduct[s.productId] || 0) + (s.qty || 0);
+  });
+  const least = allCalcs
+    .filter(x => (x.p.stock_qty || 0) > 0)
+    .map(x => ({ ...x, soldQty: qtyByProduct[x.p.id] || 0 }))
+    .sort((a, b) => (a.soldQty - b.soldQty) || (b.calc.stock_value_tl - a.calc.stock_value_tl))
+    .slice(0, 10);
+
+  const rows = [];
+  rows.push(['YÖNETİCİ RAPORU', new Date().toLocaleDateString('tr-TR')]);
+  rows.push([]);
+  rows.push(['KPI', 'Değer']);
+  rows.push(['Stok Sermayesi (TL)', totalStockTL.toFixed(2)]);
+  rows.push([year + ' Ciro (Gerçekleşen)', rev.toFixed(2)]);
+  rows.push([year + ' Tahmini Kar', profit.toFixed(2)]);
+  rows.push([year + ' Kar Marjı %', rev > 0 ? (profit / rev * 100).toFixed(1) : '0']);
+  rows.push([year + ' Satış Adedi', qty]);
+  rows.push(['Min. Fiyat Altında Ürün', belowMin.length]);
+  rows.push(['Yüksek Kur Riskli Ürün', highRisk.length]);
+  rows.push([]);
+  rows.push(['MİN. FİYAT ALTINDAKİ ÜRÜNLER']);
+  rows.push(['Ürün', 'Aktif Fiyat TL', 'Min. Satış TL', 'Fark TL']);
+  belowMin.forEach(x => rows.push([x.p.name, x.calc.active_price_tl.toFixed(2), x.calc.min_sale_price.toFixed(2), (x.calc.min_sale_price - x.calc.active_price_tl).toFixed(2)]));
+  rows.push([]);
+  rows.push(['EN AZ SATANLAR — SON 6 AY (KAMPANYA ADAYLARI)']);
+  rows.push(['Ürün', 'Grup', '6 Ay Satış Adedi', 'Stok Adedi', 'Bağlı Sermaye TL']);
+  least.forEach(x => rows.push([x.p.name, getCategoryById(x.p.group).name, x.soldQty, x.calc.stock_qty, x.calc.stock_value_tl.toFixed(2)]));
+  rows.push([]);
+  rows.push(['AYLIK CİRO & KAR — ' + year]);
+  rows.push(['Ay', 'Ciro TL', 'Kar TL']);
+  MONTHS.forEach((m, i) => rows.push([m, mRev[i].toFixed(2), mProfit[i].toFixed(2)]));
+
+  const csv = rows.map(r => r.map(v => typeof v === 'string' && (v.includes(',') || v.includes(';')) ? `"${v.replace(/"/g, '""')}"` : v).join(';')).join('\n');
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `yonetici-raporu-${new Date().toISOString().slice(0,10)}.csv`;
+  a.click();
+}
+
+function renderServiceAnalyticsSummary() {
+  const cardsEl = document.getElementById('svcSummaryCards');
+  if (!cardsEl || typeof Chart === 'undefined') return;
+  const year = new Date().getFullYear();
+  const records = (state.service || []).filter(s => (s.date_arrival || '').startsWith(String(year)));
+
+  // ---- KPI'lar ----
+  let totalCharged = 0, totalPart = 0, totalCargo = 0, warrantyCount = 0;
+  const monthlyCount = Array(12).fill(0), monthlyNet = Array(12).fill(0);
+  const partQty = {};
+  records.forEach(s => {
+    const charged = s.charged || 0, part = s.part_cost || 0, cargo = s.labor_cost || 0;
+    totalCharged += charged; totalPart += part; totalCargo += cargo;
+    if (s.warranty) warrantyCount++;
+    const i = parseInt((s.date_arrival || '').slice(5, 7), 10) - 1;
+    if (i >= 0 && i < 12) {
+      monthlyCount[i]++;
+      monthlyNet[i] += charged - part - cargo;
+    }
+    (s.parts || []).forEach(pt => { partQty[pt.name] = (partQty[pt.name] || 0) + (pt.qty || 1); });
+  });
+  const net = totalCharged - totalPart - totalCargo;
+  const warrantyPct = records.length ? warrantyCount / records.length : 0;
+
+  const kpi = (label, value, sub, color = 'text-slate-900') => `
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+      <div class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">${label}</div>
+      <div class="text-xl font-bold ${color} num">${value}</div>
+      <div class="text-xs text-slate-500 mt-0.5">${sub || ''}</div>
+    </div>`;
+  cardsEl.innerHTML =
+    kpi(`🔧 ${year} Servis Kaydı`, records.length, warrantyCount + ' garanti kapsamında') +
+    kpi('🛡️ Garanti Oranı', fmtPct(warrantyPct), 'Yüksekse ürün kalitesi sinyali', warrantyPct > 0.3 ? 'text-amber-600' : 'text-slate-900') +
+    kpi('🔩 Parça + Kargo Maliyeti', fmtTL(totalPart + totalCargo), 'Alınan ücret: ' + fmtTL(totalCharged)) +
+    kpi('💵 Servis Net Sonucu', fmtTL(net), net >= 0 ? 'Servis kendini finanse ediyor' : 'Servis maliyet merkezi durumunda', net >= 0 ? 'text-emerald-700' : 'text-red-600');
+
+  // ---- Aylık yük & net sonuç ----
+  const sub = document.getElementById('svcMonthlySubtitle');
+  if (sub) sub.textContent = `Geliş tarihine göre · ${year} · çubuk: kayıt adedi · çizgi: net sonuç (alınan ücret − parça − kargo)`;
+  destroyChart('svcMonthly');
+  charts.svcMonthly = new Chart(document.getElementById('chartSvcMonthly'), {
+    data: {
+      labels: MONTHS.map(mo => mo.slice(0, 3)),
+      datasets: [
+        { type: 'bar', label: 'Kayıt Adedi', data: monthlyCount, backgroundColor: 'rgba(30, 41, 59, 0.8)', borderRadius: 4, yAxisID: 'y', order: 2 },
+        { type: 'line', label: 'Net Sonuç (₺)', data: monthlyNet, borderColor: '#059669', backgroundColor: '#059669', tension: 0.3, pointRadius: 3, yAxisID: 'y1', order: 1 },
+      ],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: { callbacks: { label: (ctx) => ctx.dataset.yAxisID === 'y1' ? 'Net: ' + fmtTL(ctx.parsed.y) : 'Kayıt: ' + ctx.parsed.y } },
+      },
+      scales: {
+        y:  { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } } },
+        y1: { position: 'right', grid: { drawOnChartArea: false }, ticks: { callback: (v) => new Intl.NumberFormat('tr-TR', { notation: 'compact' }).format(v) + ' ₺', font: { size: 10 } } },
+        x:  { ticks: { font: { size: 10 } } },
+      },
+    },
+  });
+
+  // ---- En çok kullanılan parçalar ----
+  const topParts = Object.entries(partQty).sort((a, b) => b[1] - a[1]).slice(0, 8);
+  destroyChart('svcParts');
+  charts.svcParts = new Chart(document.getElementById('chartSvcParts'), {
+    type: 'bar',
+    data: {
+      labels: topParts.map(x => x[0].length > 24 ? x[0].slice(0, 22) + '…' : x[0]),
+      datasets: [{ label: 'Kullanım Adedi', data: topParts.map(x => x[1]), backgroundColor: 'rgba(124, 58, 237, 0.75)', borderRadius: 4 }],
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { beginAtZero: true, ticks: { stepSize: 1, font: { size: 10 } } },
+        y: { ticks: { font: { size: 10 } } },
+      },
+    },
+  });
+}
+
 function init() {
   // Veri artık onLoginSuccess içinde Supabase'den yükleniyor
   // Burada sadece event listener'ları bağlıyoruz
@@ -2957,7 +3379,7 @@ function init() {
         renderPurchasing();
       }
       if (btn.dataset.tab === 'analytics') {
-        setTimeout(() => renderAnalytics(), 50);
+        setTimeout(() => { renderAnalytics(); renderAbcAnalysis(); renderServiceAnalyticsSummary(); }, 50);
       }
       if (btn.dataset.tab === 'sales') {
         setTimeout(() => renderSalesTab(), 50);
@@ -2983,6 +3405,10 @@ function init() {
     openCategoryModal(state.categories.length - 1);
   };
   document.getElementById('exportBtn').onclick = exportExcel;
+
+  // Karar destek modülü event'leri
+  document.getElementById('homeSimSlider').oninput = runHomeRateSimulation;
+  document.getElementById('homeExportBtn').onclick = exportHomeReport;
   document.getElementById('exportAllBtn').onclick = exportAll;
   document.getElementById('importAllBtn').onclick = () => document.getElementById('importFile').click();
   document.getElementById('importFile').onchange = (e) => { if (e.target.files[0]) importBackup(e.target.files[0]); };
