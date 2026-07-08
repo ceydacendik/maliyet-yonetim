@@ -762,6 +762,10 @@
         <h3 class="font-bold text-slate-900 mb-4">➕ Satış Girişi</h3>
         <div class="space-y-3">
           <div>
+            <label class="text-xs font-medium text-slate-600">Kategori</label>
+            <select id="s_entry_group" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"></select>
+          </div>
+          <div>
             <label class="text-xs font-medium text-slate-600">Ürün</label>
             <select id="s_product" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"></select>
           </div>
@@ -4074,11 +4078,32 @@ function populateSalesProductSelects() {
   refreshProductFilter();
   if (sGroup) sGroup.onchange = () => { refreshProductFilter(); };
 
-  // Satış girişi ürün dropdown
+  // Satış girişi: önce kategori, sonra ürün (kademeli dropdown)
+  const sEntryGroup = document.getElementById('s_entry_group');
   const sProduct = document.getElementById('s_product');
-  if (sProduct) sProduct.innerHTML = state.products.map(p => '<option value="' + p.id + '">' + escapeHtml(p.name) + '</option>').join('');
+
+  if (sEntryGroup) {
+    const prevGrp = sEntryGroup.value || '';
+    sEntryGroup.innerHTML = '<option value="">— Tüm Kategoriler —</option>' +
+      state.categories.map(c => '<option value="' + c.id + '">' + escapeHtml(c.name) + '</option>').join('');
+    sEntryGroup.value = prevGrp; // kategori hâlâ varsa seçimi koru
+  }
+
+  function refreshEntryProducts() {
+    if (!sProduct) return;
+    const grp = sEntryGroup?.value || '';
+    const prevPid = sProduct.value || '';
+    const prods = (grp ? state.products.filter(p => p.group === grp) : state.products)
+      .slice().sort((a, b) => (a.name || '').localeCompare(b.name || '', 'tr'));
+    sProduct.innerHTML = '<option value="">— Ürün seçin —</option>' +
+      prods.map(p => '<option value="' + p.id + '">' + escapeHtml(p.name) + '</option>').join('');
+    if (prevPid && prods.some(p => p.id === prevPid)) sProduct.value = prevPid;
+    updateSalesCostInfo();
+  }
+
+  if (sEntryGroup) sEntryGroup.onchange = refreshEntryProducts;
   if (sProduct) sProduct.onchange = updateSalesCostInfo;
-  updateSalesCostInfo();
+  refreshEntryProducts();
 }
 
 function updateSalesCostInfo() {
