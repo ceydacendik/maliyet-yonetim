@@ -758,8 +758,12 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
       <!-- Satış Girişi -->
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+      <div id="salesEntryCard" class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 transition-shadow">
         <h3 class="font-bold text-slate-900 mb-4">➕ Satış Girişi</h3>
+        <div id="s_edit_banner" class="hidden mb-3 flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
+          <span class="text-xs text-blue-800 font-medium" id="s_edit_banner_text"></span>
+          <button onclick="cancelSalesEdit()" class="text-xs text-blue-600 hover:text-blue-800 underline ml-2 whitespace-nowrap">İptal</button>
+        </div>
         <div class="space-y-3">
           <div>
             <label class="text-xs font-medium text-slate-600">Kategori</label>
@@ -1432,6 +1436,22 @@
 </div>
 
 <!-- Confirm modal -->
+<!-- Satış kaydı not/detay modalı -->
+<div id="saleDetailModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4" onclick="if(event.target===this)this.classList.add('hidden')">
+  <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full">
+    <div class="p-6">
+      <h3 class="text-lg font-bold text-slate-900 mb-1" id="saleDetailTitle"></h3>
+      <p class="text-xs text-slate-500 mb-3" id="saleDetailMeta"></p>
+      <div class="text-xs font-semibold text-slate-600 mb-1">📝 Not</div>
+      <div id="saleDetailNote" class="bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm text-slate-700 whitespace-pre-wrap break-words max-h-64 overflow-y-auto"></div>
+      <div class="flex gap-2 mt-4">
+        <button onclick="document.getElementById('saleDetailModal').classList.add('hidden'); editSalesEntry(document.getElementById('saleDetailModal').dataset.saleId);" class="flex-1 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg text-sm font-semibold hover:bg-blue-100">✏️ Düzenle</button>
+        <button onclick="document.getElementById('saleDetailModal').classList.add('hidden')" class="flex-1 py-2 bg-slate-900 text-white rounded-lg text-sm font-semibold hover:bg-slate-700">Kapat</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <div id="confirmModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
   <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full">
     <div class="p-6">
@@ -4378,10 +4398,10 @@ function renderSalesGroupPie() {
 
 
 function renderTopSellers() {
-  const year = parseInt(document.getElementById('s_filter_year')?.value) || new Date().getFullYear();
-  const yearSales = state.sales.filter(s => s.year === year);
+  // Filtrelere (yıl, ay, kategori, ürün) tam uyumlu
+  const sales = getFilteredSales();
   const byProduct = {};
-  yearSales.forEach(s => {
+  sales.forEach(s => {
     if (!byProduct[s.productId]) byProduct[s.productId] = { revenue: 0, qty: 0 };
     byProduct[s.productId].revenue += s.revenue || 0;
     byProduct[s.productId].qty += s.qty || 0;
@@ -4389,7 +4409,7 @@ function renderTopSellers() {
   const sorted = Object.entries(byProduct).sort((a,b) => b[1].revenue - a[1].revenue).slice(0, 8);
   const el = document.getElementById('topSellersList');
   if (!el) return;
-  if (!sorted.length) { el.innerHTML = '<p class="text-sm text-slate-400">Henüz satış kaydı yok.</p>'; return; }
+  if (!sorted.length) { el.innerHTML = '<p class="text-sm text-slate-400">Filtreye uyan satış kaydı yok.</p>'; return; }
   const maxRev = sorted[0][1].revenue;
   el.innerHTML = sorted.map(([pid, d], i) => {
     const p = state.products.find(x => x.id === pid);
@@ -4443,40 +4463,146 @@ function renderStockTurnover() {
   }).join('') + '</tbody></table>';
 }
 
+// Hangi kategori grupları açık? (oturum içi, kalıcı değil)
+const salesGroupsOpen = {};
+
+function toggleSalesGroup(catId) {
+  salesGroupsOpen[catId] = !salesGroupsOpen[catId];
+  renderSalesTable();
+}
+
 function renderSalesTable() {
+  // Eski kayıtlarda id yoksa üret (düzenle/sil id ile çalışıyor)
+  state.sales.forEach((s, i) => { if (!s.id) s.id = 'sale_legacy_' + i + '_' + s.productId + '_' + s.year + '_' + s.month; });
+
   const filtered = getFilteredSales().sort((a,b) => b.year*100+b.month - (a.year*100+a.month));
   const el = document.getElementById('salesTbody');
   if (!el) return;
   if (!filtered.length) {
-    el.innerHTML = '<tr><td colspan="9" class="px-3 py-8 text-center text-slate-400">Henüz satış kaydı yok.</td></tr>';
+    el.innerHTML = '<tr><td colspan="9" class="px-3 py-8 text-center text-slate-400">Filtreye uyan satış kaydı yok.</td></tr>';
     return;
   }
-  el.innerHTML = filtered.map((s, i) => {
+
+  // Kategoriye göre grupla — kapalı gruplar render edilmez (hız için)
+  const groups = {};
+  filtered.forEach(s => {
     const p = state.products.find(x => x.id === s.productId);
-    const name = p ? escapeHtml(p.name) : s.productId;
-    const calc = p ? calculateProduct(p) : null;
-    const unitCost = calc ? calc.totalCost : 0;
-    const totalCost = unitCost * (s.qty||0);
-    const profit = (s.revenue||0) - totalCost;
-    const margin = s.revenue > 0 ? (profit / s.revenue * 100) : 0;
-    const marginColor = margin >= 50 ? 'text-green-700' : margin >= 30 ? 'text-amber-700' : 'text-red-700';
-    const noStockBadge = s.no_stock ? '<span class="inline-block bg-amber-100 text-amber-700 text-[10px] px-1.5 py-0.5 rounded ml-1">stok yok</span>' : '';
-    const noteText = s.note ? escapeHtml(s.note) : '';
-    const noteCell = noteText
-      ? `<span class="text-slate-500 block max-w-[160px] truncate" title="${noteText}">📝 ${noteText}</span>`
-      : '<span class="text-slate-300">—</span>';
-    return `<tr class="border-t border-slate-100 hover:bg-slate-50 ${s.no_stock ? 'opacity-60' : ''}">
-      <td class="px-3 py-2 font-medium text-slate-800">${name}${noStockBadge}</td>
-      <td class="px-3 py-2 text-slate-600">${MONTHS[s.month-1]} ${s.year}</td>
-      <td class="px-3 py-2 num">${s.no_stock ? '<span class="text-amber-600">—</span>' : (s.qty||0) + ' ad'}</td>
-      <td class="px-3 py-2 num font-semibold">${s.no_stock ? '—' : fmtTL2(s.revenue||0)}</td>
-      <td class="px-3 py-2 num text-slate-500">${s.qty ? fmtTL2((s.revenue||0)/(s.qty)) : '—'}</td>
-      <td class="px-3 py-2 num text-slate-500">${fmtTL2(totalCost)}</td>
-      <td class="px-3 py-2 num font-semibold ${marginColor}">${s.no_stock ? '—' : margin.toFixed(1)+'%'}</td>
-      <td class="px-3 py-2 text-xs">${noteCell}</td>
-      <td class="px-3 py-2"><button onclick="deleteSalesEntry(${i})" class="text-red-400 hover:text-red-700 text-xs">Sil</button></td>
+    const catId = (p && p.group) || '_other';
+    if (!groups[catId]) groups[catId] = [];
+    groups[catId].push(s);
+  });
+
+  let html = '';
+  Object.entries(groups).forEach(([catId, sales]) => {
+    const cat = state.categories.find(c => c.id === catId);
+    const catName = cat ? escapeHtml(cat.name) : 'Diğer';
+    const open = !!salesGroupsOpen[catId];
+    const totalRev = sales.reduce((t, s) => t + (s.revenue||0), 0);
+    const totalQty = sales.reduce((t, s) => t + (s.qty||0), 0);
+    html += `<tr class="bg-slate-100/80 cursor-pointer hover:bg-slate-200/70 select-none" onclick="toggleSalesGroup('${catId}')">
+      <td colspan="9" class="px-3 py-2.5">
+        <span class="inline-block w-4 text-slate-500">${open ? '▾' : '▸'}</span>
+        <span class="font-semibold text-slate-800">${catName}</span>
+        <span class="text-xs text-slate-500 ml-2">${sales.length} kayıt · ${totalQty} ad · ${fmtTL2(totalRev)}</span>
+      </td>
     </tr>`;
-  }).join('');
+    if (open) html += sales.map(renderSalesRow).join('');
+  });
+  el.innerHTML = html;
+}
+
+function renderSalesRow(s) {
+  const p = state.products.find(x => x.id === s.productId);
+  const name = p ? escapeHtml(p.name) : s.productId;
+  const calc = p ? calculateProduct(p) : null;
+  const unitCost = calc ? calc.totalCost : 0;
+  const totalCost = unitCost * (s.qty||0);
+  const profit = (s.revenue||0) - totalCost;
+  const margin = s.revenue > 0 ? (profit / s.revenue * 100) : 0;
+  const marginColor = margin >= 50 ? 'text-green-700' : margin >= 30 ? 'text-amber-700' : 'text-red-700';
+  const noStockBadge = s.no_stock ? '<span class="inline-block bg-amber-100 text-amber-700 text-[10px] px-1.5 py-0.5 rounded ml-1">stok yok</span>' : '';
+  const noteText = s.note ? escapeHtml(s.note) : '';
+  const noteCell = noteText
+    ? `<span class="text-slate-500 block max-w-[160px] truncate cursor-pointer hover:text-blue-600 hover:underline" title="Tamamını görmek için tıkla" onclick="showSaleDetail('${s.id}')">📝 ${noteText}</span>`
+    : '<span class="text-slate-300">—</span>';
+  return `<tr class="border-t border-slate-100 hover:bg-slate-50 ${s.no_stock ? 'opacity-60' : ''}">
+    <td class="px-3 py-2 font-medium text-slate-800 cursor-pointer hover:text-blue-700" onclick="showSaleDetail('${s.id}')">${name}${noStockBadge}</td>
+    <td class="px-3 py-2 text-slate-600">${MONTHS[s.month-1]} ${s.year}</td>
+    <td class="px-3 py-2 num">${s.no_stock ? '<span class="text-amber-600">—</span>' : (s.qty||0) + ' ad'}</td>
+    <td class="px-3 py-2 num font-semibold">${s.no_stock ? '—' : fmtTL2(s.revenue||0)}</td>
+    <td class="px-3 py-2 num text-slate-500">${s.qty ? fmtTL2((s.revenue||0)/(s.qty)) : '—'}</td>
+    <td class="px-3 py-2 num text-slate-500">${fmtTL2(totalCost)}</td>
+    <td class="px-3 py-2 num font-semibold ${marginColor}">${s.no_stock ? '—' : margin.toFixed(1)+'%'}</td>
+    <td class="px-3 py-2 text-xs">${noteCell}</td>
+    <td class="px-3 py-2 whitespace-nowrap">
+      <button onclick="editSalesEntry('${s.id}')" class="text-blue-500 hover:text-blue-700 text-xs mr-2">Düzenle</button>
+      <button onclick="deleteSalesEntry('${s.id}')" class="text-red-400 hover:text-red-700 text-xs">Sil</button>
+    </td>
+  </tr>`;
+}
+
+function showSaleDetail(saleId) {
+  const s = state.sales.find(x => x.id === saleId);
+  if (!s) return;
+  const p = state.products.find(x => x.id === s.productId);
+  const modal = document.getElementById('saleDetailModal');
+  if (!modal) return;
+  modal.dataset.saleId = saleId;
+  document.getElementById('saleDetailTitle').textContent = p ? p.name : s.productId;
+  document.getElementById('saleDetailMeta').textContent =
+    MONTHS[s.month-1] + ' ' + s.year + ' · ' + (s.no_stock ? 'stok yok' : (s.qty||0) + ' ad · ' + fmtTL2(s.revenue||0));
+  document.getElementById('saleDetailNote').textContent = s.note || 'Bu kayda not eklenmemiş.';
+  modal.classList.remove('hidden');
+}
+
+function editSalesEntry(saleId) {
+  const s = state.sales.find(x => x.id === saleId);
+  if (!s) return;
+  const p = state.products.find(x => x.id === s.productId);
+  window._editingSaleId = saleId;
+
+  // Kategori → ürün seçimini ayarla
+  const grpSel = document.getElementById('s_entry_group');
+  if (grpSel) grpSel.value = (p && p.group) || '';
+  populateSalesProductSelects();
+  const prodSel = document.getElementById('s_product');
+  if (prodSel) prodSel.value = s.productId;
+
+  document.getElementById('s_month').value = s.month;
+  document.getElementById('s_year').value = s.year;
+  document.getElementById('s_no_stock').checked = !!s.no_stock;
+  document.getElementById('s_qty_row').classList.toggle('opacity-40', !!s.no_stock);
+  document.getElementById('s_revenue_row').classList.toggle('opacity-40', !!s.no_stock);
+  document.getElementById('s_qty').value = s.no_stock ? '' : (s.qty || '');
+  document.getElementById('s_revenue').value = s.no_stock ? '' : (s.revenue || '');
+  document.getElementById('s_note').value = s.note || '';
+  updateSalesCostInfo();
+
+  // Düzenleme modunu göster + forma kaydır
+  const banner = document.getElementById('s_edit_banner');
+  if (banner) {
+    banner.classList.remove('hidden');
+    document.getElementById('s_edit_banner_text').textContent =
+      '✏️ Düzenleniyor: ' + (p ? p.name : s.productId) + ' — ' + MONTHS[s.month-1] + ' ' + s.year;
+  }
+  const card = document.getElementById('salesEntryCard');
+  if (card) {
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    card.classList.add('ring-2', 'ring-blue-400');
+    setTimeout(() => card.classList.remove('ring-2', 'ring-blue-400'), 1800);
+  }
+}
+
+function cancelSalesEdit() {
+  window._editingSaleId = null;
+  document.getElementById('s_edit_banner')?.classList.add('hidden');
+  document.getElementById('s_qty').value = '';
+  document.getElementById('s_revenue').value = '';
+  document.getElementById('s_note').value = '';
+  const ns = document.getElementById('s_no_stock');
+  if (ns) ns.checked = false;
+  document.getElementById('s_qty_row')?.classList.remove('opacity-40');
+  document.getElementById('s_revenue_row')?.classList.remove('opacity-40');
 }
 
 function saveSalesEntry() {
@@ -4490,6 +4616,19 @@ function saveSalesEntry() {
 
   if (!pid) { alert('Ürün seçmelisin!'); return; }
   if (!noStock && !qty) { alert('Satış adedi girilmeli ya da "stok yok" seçilmeli!'); return; }
+
+  // Düzenleme modundaysak: eski kaydı kaldır, stokunu geri ver
+  if (window._editingSaleId) {
+    const oldIdx = state.sales.findIndex(s => s.id === window._editingSaleId);
+    if (oldIdx >= 0) {
+      const old = state.sales[oldIdx];
+      const op = state.products.find(x => x.id === old.productId);
+      if (op && !old.no_stock) op.stock_qty = (op.stock_qty||0) + (old.qty||0);
+      state.sales.splice(oldIdx, 1);
+    }
+    window._editingSaleId = null;
+    document.getElementById('s_edit_banner')?.classList.add('hidden');
+  }
 
   // Aynı ürün + ay + yıl varsa üzerine yaz
   const existing = state.sales.findIndex(s => s.productId === pid && s.month === month && s.year === year);
@@ -4517,14 +4656,14 @@ function saveSalesEntry() {
   renderProducts();
 }
 
-function deleteSalesEntry(tableIdx) {
-  const filtered = getFilteredSales().sort((a,b) => b.year*100+b.month - (a.year*100+a.month));
-  const entry = filtered[tableIdx];
+function deleteSalesEntry(saleId) {
+  const entry = state.sales.find(s => s.id === saleId);
   if (!entry) return;
   // Stoku geri ver
   const p = state.products.find(x => x.id === entry.productId);
   if (p) { p.stock_qty = (p.stock_qty||0) + (entry.qty||0); }
-  state.sales = state.sales.filter(s => s.id !== entry.id);
+  state.sales = state.sales.filter(s => s.id !== saleId);
+  if (window._editingSaleId === saleId) cancelSalesEdit();
   persist(); renderSalesTab(); renderProducts();
 }
 
