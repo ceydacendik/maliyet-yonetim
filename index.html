@@ -112,7 +112,6 @@
     <button data-tab="purchasing" class="tab-btn pill-btn tab-inactive">🛒 Satın Alma</button>
     <button data-tab="sales" class="tab-btn pill-btn tab-inactive">💰 Satış Takibi</button>
     <button data-tab="service" class="tab-btn pill-btn tab-inactive">🔧 Teknik Servis</button>
-    <button data-tab="analytics" class="tab-btn pill-btn tab-inactive">📊 Analitik</button>
     <button data-tab="categories" class="tab-btn pill-btn tab-inactive">🗂️ Kategoriler & Vergiler</button>
     <button data-tab="settings" class="tab-btn pill-btn tab-inactive">⚙️ Ayarlar</button>
     <button data-tab="history" class="tab-btn pill-btn tab-inactive">📚 Fiyat Geçmişi</button>
@@ -146,6 +145,17 @@
       <div id="homeAlerts" class="space-y-2"></div>
     </div>
 
+    <!-- Analiz kategorisi navigasyonu -->
+    <div class="flex flex-wrap gap-2 mb-4" id="homeSecNav">
+      <button data-sec="overview"   class="home-sec-btn pill-btn bg-slate-900 text-white">🏠 Genel Bakış</button>
+      <button data-sec="sales"      class="home-sec-btn pill-btn bg-white border border-slate-200 hover:bg-slate-50">💰 Satış Analizleri</button>
+      <button data-sec="product"    class="home-sec-btn pill-btn bg-white border border-slate-200 hover:bg-slate-50">📦 Ürün & Stok Analizleri</button>
+      <button data-sec="purchasing" class="home-sec-btn pill-btn bg-white border border-slate-200 hover:bg-slate-50">🛒 Satın Alma Analizleri</button>
+      <button data-sec="service"    class="home-sec-btn pill-btn bg-white border border-slate-200 hover:bg-slate-50">🔧 Teknik Servis Analizleri</button>
+      <button data-sec="risk"       class="home-sec-btn pill-btn bg-white border border-slate-200 hover:bg-slate-50">⚠ Risk & Kur</button>
+    </div>
+
+    <div id="homeSec-overview" class="home-sec">
     <!-- Grafikler -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
       <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
@@ -210,6 +220,221 @@
     <div class="mb-4">
       <h3 class="text-sm font-semibold text-slate-500 uppercase tracking-wider mb-2">Hızlı Erişim</h3>
       <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="homeQuickNav"></div>
+    </div>
+    </div><!-- /homeSec-overview -->
+
+    <div id="homeSec-product" class="home-sec hidden">
+    <!-- Summary cards -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+        <div class="text-xs text-slate-500 uppercase tracking-wider">💰 Toplam Stok Sermayesi</div>
+        <div class="text-2xl font-bold text-slate-900 mt-1" id="aTotalCapitalTL">—</div>
+        <div class="text-sm text-slate-500" id="aTotalCapitalUSD">—</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+        <div class="text-xs text-slate-500 uppercase tracking-wider">📦 Toplam Stok Adedi</div>
+        <div class="text-2xl font-bold text-slate-900 mt-1" id="aTotalQty">—</div>
+        <div class="text-sm text-slate-500" id="aProductCount">—</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+        <div class="text-xs text-slate-500 uppercase tracking-wider">📈 Tahmini Aylık Kar</div>
+        <div class="text-2xl font-bold text-emerald-700 mt-1" id="aMonthlyProfitTL">—</div>
+        <div class="text-sm text-slate-500" id="aMonthlyProfitUSD">—</div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+        <div class="text-xs text-slate-500 uppercase tracking-wider">🎯 Tahmini Yıllık Kar</div>
+        <div class="text-2xl font-bold text-emerald-700 mt-1" id="aAnnualProfitTL">—</div>
+        <div class="text-sm text-slate-500" id="aAnnualProfitUSD">—</div>
+      </div>
+    </div>
+
+    <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 flex items-start gap-2">
+      <div class="text-amber-700 text-lg">💡</div>
+      <div class="text-sm text-amber-900">
+        <strong>Nasıl çalışır?</strong> Her ürünün "Stok Adedi" ve "Aylık Satış Tahmini" alanlarını "Düzenle" ekranından girersin. Sistem bunları kullanarak sermayeni, aylık ve yıllık kar projeksiyonunu hesaplar. Veriler hassas olduğu kadar tahminler de doğru olur.
+      </div>
+    </div>
+
+    <!-- Charts row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="text-base font-bold text-slate-900 mb-1">Sermayenin Gruplara Dağılımı</h3>
+        <p class="text-xs text-slate-500 mb-3">Stok değeri × adet, kategori bazında</p>
+        <div style="height: 280px;"><canvas id="chartCapitalByGroup"></canvas></div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="text-base font-bold text-slate-900 mb-1">Aylık Kar Potansiyeli — Gruplara Göre</h3>
+        <p class="text-xs text-slate-500 mb-3">Aylık satış tahmini × birim kar, kategori bazında</p>
+        <div style="height: 280px;"><canvas id="chartProfitByGroup"></canvas></div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="text-base font-bold text-slate-900 mb-1">Top 10 — Sermaye Bağlı Ürünler</h3>
+        <p class="text-xs text-slate-500 mb-3">Stok değeri en yüksek ürünler</p>
+        <div style="height: 320px;"><canvas id="chartTopCapital"></canvas></div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="text-base font-bold text-slate-900 mb-1">Top 10 — Aylık Kar Potansiyeli</h3>
+        <p class="text-xs text-slate-500 mb-3">Aylık tahmini kâra en çok katkı sağlayan ürünler</p>
+        <div style="height: 320px;"><canvas id="chartTopProfit"></canvas></div>
+      </div>
+    </div>
+
+    <!-- ABC / Pareto Analizi -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-4">
+      <h3 class="text-base font-bold text-slate-900 mb-1">🔬 ABC / Pareto Analizi — Ciro Konsantrasyonu</h3>
+      <p class="text-xs text-slate-500 mb-3" id="abcSubtitle">Hangi ürünler cironun büyük kısmını üretiyor? A: kümülatif %80'e kadar · B: %80–95 · C: kalan kuyruk</p>
+      <div id="abcCards" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4"></div>
+      <div id="abcInsight" class="text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 mb-4"></div>
+      <div style="height: 320px;"><canvas id="chartAbcPareto"></canvas></div>
+      <p class="text-[11px] text-slate-400 mt-2">Çubuklar: ürün bazlı ciro (ilk 15 ürün) · Çizgi: kümülatif ciro payı % · Renkler ABC sınıfını gösterir.</p>
+    </div>
+
+
+    </div>
+    <div id="homeSec-sales" class="home-sec hidden">
+    <!-- Grup Şirketleri Karşılaştırması -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-4">
+      <h3 class="text-base font-bold text-slate-900 mb-1">🏢 Grup Şirketleri Karşılaştırması</h3>
+      <p class="text-xs text-slate-500 mb-3" id="cmpSubtitle">Satış kayıtlarının firma boyutuna göre kırılımı · genel analizler her zaman grup toplamını gösterir</p>
+      <div id="cmpCompanyCards" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4"></div>
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div class="lg:col-span-2">
+          <h4 class="text-sm font-semibold text-slate-700 mb-2">Aylık Ciro — Firma Kırılımlı (Yığılmış)</h4>
+          <div style="height: 280px;"><canvas id="chartCompanyMonthly"></canvas></div>
+        </div>
+        <div>
+          <h4 class="text-sm font-semibold text-slate-700 mb-2">Yıllık Ciro Payı</h4>
+          <div style="height: 280px; position: relative;"><canvas id="chartCompanyShare"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Margin Trend -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-4">
+      <h3 class="text-base font-bold text-slate-900 mb-1">📈 Marj & Fiyat Trendi</h3>
+      <p class="text-xs text-slate-500 mb-3">Fiyat geçmişindeki değişikliklerin görselleştirilmesi.</p>
+      <div id="trendContainer">
+        <p class="text-sm text-slate-400 py-8 text-center" id="trendEmpty">Henüz fiyat değişikliği yok. Bir ürünün fiyatını değiştirdiğinde burada görünür.</p>
+        <div style="height: 320px; display:none;" id="trendCanvasWrap"><canvas id="chartTrend"></canvas></div>
+        <div class="flex gap-2 mt-2" id="trendFilters" style="display:none;">
+          <select id="trendProductFilter" class="px-3 py-1 border border-slate-200 rounded-lg text-xs"></select>
+        </div>
+      </div>
+    </div>
+
+
+    </div>
+    <div id="homeSec-purchasing" class="home-sec hidden">
+    <!-- ===== SATIN ALMA ANALİZİ ===== -->
+    <h2 class="text-lg font-bold text-slate-900 mb-3 mt-6">🛒 Satın Alma Analizi</h2>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="text-base font-bold text-slate-900 mb-1">Aylık Satın Alma Hacmi</h3>
+        <p class="text-xs text-slate-500 mb-3">Son 12 ay, sipariş tarihine göre (TL)</p>
+        <div style="height: 260px;"><canvas id="chartPOVolume"></canvas></div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="text-base font-bold text-slate-900 mb-1">Tedarikçi Bazında Harcama</h3>
+        <p class="text-xs text-slate-500 mb-3">Tüm zamanlar, toplam sipariş tutarı</p>
+        <div style="height: 260px;"><canvas id="chartPOSupplierSpend"></canvas></div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="text-base font-bold text-slate-900 mb-1">💵 Yaklaşan Ödemeler</h3>
+        <p class="text-xs text-slate-500 mb-3">Ödenmemiş / kısmi ödenmiş açık siparişler, beklenen teslime göre sıralı</p>
+        <div id="upcomingPaymentsList" class="space-y-2"></div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="text-base font-bold text-slate-900 mb-1">🧾 Maliyet Sapması</h3>
+        <p class="text-xs text-slate-500 mb-3">Teslim alınan siparişlerde birim maliyet vs ürünün güncel kayıtlı maliyeti</p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs">
+            <thead class="text-slate-500 uppercase tracking-wider border-b border-slate-100">
+              <tr>
+                <th class="px-2 py-1.5 text-left">Ürün</th>
+                <th class="px-2 py-1.5 num">Yeni Birim Maliyet</th>
+                <th class="px-2 py-1.5 num">Kayıtlı Maliyet</th>
+                <th class="px-2 py-1.5 num">Fark</th>
+              </tr>
+            </thead>
+            <tbody id="poCostDeviationTbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+      <h3 class="text-base font-bold text-slate-900 mb-3">🏆 Tedarikçi Performansı</h3>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="text-slate-500 text-xs uppercase tracking-wider border-b border-slate-100">
+            <tr>
+              <th class="px-3 py-2 text-left">Tedarikçi</th>
+              <th class="px-3 py-2 num">Sipariş Sayısı</th>
+              <th class="px-3 py-2 num">Zamanında Teslim %</th>
+              <th class="px-3 py-2 num">Ort. Gecikme (gün)</th>
+              <th class="px-3 py-2 num">Toplam Hacim (TL)</th>
+            </tr>
+          </thead>
+          <tbody id="analyticsSupplierPerfTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+
+    </div>
+    <div id="homeSec-service" class="home-sec hidden">
+    <!-- ===== TEKNİK SERVİS ANALİZİ ===== -->
+    <h2 class="text-lg font-bold text-slate-900 mb-3 mt-6">🔧 Teknik Servis Analizi</h2>
+
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4" id="svcSummaryCards"></div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="text-base font-bold text-slate-900 mb-1">Aylık Servis Yükü & Net Sonuç</h3>
+        <p class="text-xs text-slate-500 mb-3" id="svcMonthlySubtitle">Geliş tarihine göre, cari yıl · çubuk: kayıt adedi · çizgi: net sonuç (alınan ücret − parça − kargo)</p>
+        <div style="height: 260px;"><canvas id="chartSvcMonthly"></canvas></div>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="text-base font-bold text-slate-900 mb-1">En Çok Kullanılan Yedek Parçalar</h3>
+        <p class="text-xs text-slate-500 mb-3">Cari yıl, adet bazında ilk 8 · arıza kök nedeni ve stok planlaması için</p>
+        <div style="height: 260px;"><canvas id="chartSvcParts"></canvas></div>
+      </div>
+    </div>
+
+
+    </div>
+    <div id="homeSec-risk" class="home-sec hidden">
+    <!-- Currency Risk Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-4">
+      <h3 class="text-base font-bold text-slate-900 mb-1">⚠ Kur Riski — Maliyeti Şişen Ürünler</h3>
+      <p class="text-xs text-slate-500 mb-3">Alış kuru ile güncel TCMB kuru arasındaki fark %5'in üzerinde olan ürünler. Bu ürünleri yeniden almak için bugün daha fazla TL ödersin.</p>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead>
+            <tr>
+              <th class="px-3 py-2 text-left">Ürün</th>
+              <th class="px-3 py-2 text-left">Grup</th>
+              <th class="px-3 py-2 num">Alış Kuru</th>
+              <th class="px-3 py-2 num">Güncel Kur</th>
+              <th class="px-3 py-2 num">Fark</th>
+              <th class="px-3 py-2 num">Eski Maliyet</th>
+              <th class="px-3 py-2 num">Bugünkü Maliyet</th>
+              <th class="px-3 py-2 num">Etki</th>
+            </tr>
+          </thead>
+          <tbody id="riskTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+
     </div>
   </section>
 
@@ -362,190 +587,6 @@
     </div>
   </section>
 
-  <section id="tab-analytics" class="tab-content hidden">
-    <!-- Summary cards -->
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-        <div class="text-xs text-slate-500 uppercase tracking-wider">💰 Toplam Stok Sermayesi</div>
-        <div class="text-2xl font-bold text-slate-900 mt-1" id="aTotalCapitalTL">—</div>
-        <div class="text-sm text-slate-500" id="aTotalCapitalUSD">—</div>
-      </div>
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-        <div class="text-xs text-slate-500 uppercase tracking-wider">📦 Toplam Stok Adedi</div>
-        <div class="text-2xl font-bold text-slate-900 mt-1" id="aTotalQty">—</div>
-        <div class="text-sm text-slate-500" id="aProductCount">—</div>
-      </div>
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-        <div class="text-xs text-slate-500 uppercase tracking-wider">📈 Tahmini Aylık Kar</div>
-        <div class="text-2xl font-bold text-emerald-700 mt-1" id="aMonthlyProfitTL">—</div>
-        <div class="text-sm text-slate-500" id="aMonthlyProfitUSD">—</div>
-      </div>
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
-        <div class="text-xs text-slate-500 uppercase tracking-wider">🎯 Tahmini Yıllık Kar</div>
-        <div class="text-2xl font-bold text-emerald-700 mt-1" id="aAnnualProfitTL">—</div>
-        <div class="text-sm text-slate-500" id="aAnnualProfitUSD">—</div>
-      </div>
-    </div>
-
-    <div class="bg-amber-50 border border-amber-200 rounded-xl p-3 mb-4 flex items-start gap-2">
-      <div class="text-amber-700 text-lg">💡</div>
-      <div class="text-sm text-amber-900">
-        <strong>Nasıl çalışır?</strong> Her ürünün "Stok Adedi" ve "Aylık Satış Tahmini" alanlarını "Düzenle" ekranından girersin. Sistem bunları kullanarak sermayeni, aylık ve yıllık kar projeksiyonunu hesaplar. Veriler hassas olduğu kadar tahminler de doğru olur.
-      </div>
-    </div>
-
-    <!-- Charts row -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-        <h3 class="text-base font-bold text-slate-900 mb-1">Sermayenin Gruplara Dağılımı</h3>
-        <p class="text-xs text-slate-500 mb-3">Stok değeri × adet, kategori bazında</p>
-        <div style="height: 280px;"><canvas id="chartCapitalByGroup"></canvas></div>
-      </div>
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-        <h3 class="text-base font-bold text-slate-900 mb-1">Aylık Kar Potansiyeli — Gruplara Göre</h3>
-        <p class="text-xs text-slate-500 mb-3">Aylık satış tahmini × birim kar, kategori bazında</p>
-        <div style="height: 280px;"><canvas id="chartProfitByGroup"></canvas></div>
-      </div>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-        <h3 class="text-base font-bold text-slate-900 mb-1">Top 10 — Sermaye Bağlı Ürünler</h3>
-        <p class="text-xs text-slate-500 mb-3">Stok değeri en yüksek ürünler</p>
-        <div style="height: 320px;"><canvas id="chartTopCapital"></canvas></div>
-      </div>
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-        <h3 class="text-base font-bold text-slate-900 mb-1">Top 10 — Aylık Kar Potansiyeli</h3>
-        <p class="text-xs text-slate-500 mb-3">Aylık tahmini kâra en çok katkı sağlayan ürünler</p>
-        <div style="height: 320px;"><canvas id="chartTopProfit"></canvas></div>
-      </div>
-    </div>
-
-    <!-- ABC / Pareto Analizi -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-4">
-      <h3 class="text-base font-bold text-slate-900 mb-1">🔬 ABC / Pareto Analizi — Ciro Konsantrasyonu</h3>
-      <p class="text-xs text-slate-500 mb-3" id="abcSubtitle">Hangi ürünler cironun büyük kısmını üretiyor? A: kümülatif %80'e kadar · B: %80–95 · C: kalan kuyruk</p>
-      <div id="abcCards" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4"></div>
-      <div id="abcInsight" class="text-sm text-slate-700 bg-slate-50 border border-slate-200 rounded-lg px-3 py-2 mb-4"></div>
-      <div style="height: 320px;"><canvas id="chartAbcPareto"></canvas></div>
-      <p class="text-[11px] text-slate-400 mt-2">Çubuklar: ürün bazlı ciro (ilk 15 ürün) · Çizgi: kümülatif ciro payı % · Renkler ABC sınıfını gösterir.</p>
-    </div>
-
-    <!-- Margin Trend -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-4">
-      <h3 class="text-base font-bold text-slate-900 mb-1">📈 Marj & Fiyat Trendi</h3>
-      <p class="text-xs text-slate-500 mb-3">Fiyat geçmişindeki değişikliklerin görselleştirilmesi.</p>
-      <div id="trendContainer">
-        <p class="text-sm text-slate-400 py-8 text-center" id="trendEmpty">Henüz fiyat değişikliği yok. Bir ürünün fiyatını değiştirdiğinde burada görünür.</p>
-        <div style="height: 320px; display:none;" id="trendCanvasWrap"><canvas id="chartTrend"></canvas></div>
-        <div class="flex gap-2 mt-2" id="trendFilters" style="display:none;">
-          <select id="trendProductFilter" class="px-3 py-1 border border-slate-200 rounded-lg text-xs"></select>
-        </div>
-      </div>
-    </div>
-
-    <!-- ===== SATIN ALMA ANALİZİ ===== -->
-    <h2 class="text-lg font-bold text-slate-900 mb-3 mt-6">🛒 Satın Alma Analizi</h2>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-        <h3 class="text-base font-bold text-slate-900 mb-1">Aylık Satın Alma Hacmi</h3>
-        <p class="text-xs text-slate-500 mb-3">Son 12 ay, sipariş tarihine göre (TL)</p>
-        <div style="height: 260px;"><canvas id="chartPOVolume"></canvas></div>
-      </div>
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-        <h3 class="text-base font-bold text-slate-900 mb-1">Tedarikçi Bazında Harcama</h3>
-        <p class="text-xs text-slate-500 mb-3">Tüm zamanlar, toplam sipariş tutarı</p>
-        <div style="height: 260px;"><canvas id="chartPOSupplierSpend"></canvas></div>
-      </div>
-    </div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-        <h3 class="text-base font-bold text-slate-900 mb-1">💵 Yaklaşan Ödemeler</h3>
-        <p class="text-xs text-slate-500 mb-3">Ödenmemiş / kısmi ödenmiş açık siparişler, beklenen teslime göre sıralı</p>
-        <div id="upcomingPaymentsList" class="space-y-2"></div>
-      </div>
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-        <h3 class="text-base font-bold text-slate-900 mb-1">🧾 Maliyet Sapması</h3>
-        <p class="text-xs text-slate-500 mb-3">Teslim alınan siparişlerde birim maliyet vs ürünün güncel kayıtlı maliyeti</p>
-        <div class="overflow-x-auto">
-          <table class="w-full text-xs">
-            <thead class="text-slate-500 uppercase tracking-wider border-b border-slate-100">
-              <tr>
-                <th class="px-2 py-1.5 text-left">Ürün</th>
-                <th class="px-2 py-1.5 num">Yeni Birim Maliyet</th>
-                <th class="px-2 py-1.5 num">Kayıtlı Maliyet</th>
-                <th class="px-2 py-1.5 num">Fark</th>
-              </tr>
-            </thead>
-            <tbody id="poCostDeviationTbody"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-      <h3 class="text-base font-bold text-slate-900 mb-3">🏆 Tedarikçi Performansı</h3>
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead class="text-slate-500 text-xs uppercase tracking-wider border-b border-slate-100">
-            <tr>
-              <th class="px-3 py-2 text-left">Tedarikçi</th>
-              <th class="px-3 py-2 num">Sipariş Sayısı</th>
-              <th class="px-3 py-2 num">Zamanında Teslim %</th>
-              <th class="px-3 py-2 num">Ort. Gecikme (gün)</th>
-              <th class="px-3 py-2 num">Toplam Hacim (TL)</th>
-            </tr>
-          </thead>
-          <tbody id="analyticsSupplierPerfTbody"></tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- ===== TEKNİK SERVİS ANALİZİ ===== -->
-    <h2 class="text-lg font-bold text-slate-900 mb-3 mt-6">🔧 Teknik Servis Analizi</h2>
-
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4" id="svcSummaryCards"></div>
-
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-        <h3 class="text-base font-bold text-slate-900 mb-1">Aylık Servis Yükü & Net Sonuç</h3>
-        <p class="text-xs text-slate-500 mb-3" id="svcMonthlySubtitle">Geliş tarihine göre, cari yıl · çubuk: kayıt adedi · çizgi: net sonuç (alınan ücret − parça − kargo)</p>
-        <div style="height: 260px;"><canvas id="chartSvcMonthly"></canvas></div>
-      </div>
-      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
-        <h3 class="text-base font-bold text-slate-900 mb-1">En Çok Kullanılan Yedek Parçalar</h3>
-        <p class="text-xs text-slate-500 mb-3">Cari yıl, adet bazında ilk 8 · arıza kök nedeni ve stok planlaması için</p>
-        <div style="height: 260px;"><canvas id="chartSvcParts"></canvas></div>
-      </div>
-    </div>
-
-    <!-- Currency Risk Table -->
-    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-4">
-      <h3 class="text-base font-bold text-slate-900 mb-1">⚠ Kur Riski — Maliyeti Şişen Ürünler</h3>
-      <p class="text-xs text-slate-500 mb-3">Alış kuru ile güncel TCMB kuru arasındaki fark %5'in üzerinde olan ürünler. Bu ürünleri yeniden almak için bugün daha fazla TL ödersin.</p>
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead>
-            <tr>
-              <th class="px-3 py-2 text-left">Ürün</th>
-              <th class="px-3 py-2 text-left">Grup</th>
-              <th class="px-3 py-2 num">Alış Kuru</th>
-              <th class="px-3 py-2 num">Güncel Kur</th>
-              <th class="px-3 py-2 num">Fark</th>
-              <th class="px-3 py-2 num">Eski Maliyet</th>
-              <th class="px-3 py-2 num">Bugünkü Maliyet</th>
-              <th class="px-3 py-2 num">Etki</th>
-            </tr>
-          </thead>
-          <tbody id="riskTbody"></tbody>
-        </table>
-      </div>
-    </div>
-
-  </section>
-
   <section id="tab-categories" class="tab-content hidden">
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6">
       <div class="flex items-start justify-between mb-4">
@@ -654,6 +695,15 @@
     <!-- Filtreler bar -->
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-3 mb-4 flex flex-wrap gap-2 items-end">
       <div>
+        <label class="text-xs font-medium text-slate-500">Firma</label>
+        <select id="s_filter_company" class="mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm min-w-[150px]">
+          <option value="">Grup Toplamı (Tümü)</option>
+          <option value="kozmetik">Kozmetik</option>
+          <option value="makine">Makine</option>
+          <option value="azra1">Azra1</option>
+        </select>
+      </div>
+      <div>
         <label class="text-xs font-medium text-slate-500">Kategori</label>
         <select id="s_filter_group" class="mt-1 px-3 py-2 border border-slate-200 rounded-lg text-sm min-w-[160px]">
           <option value="">Tüm Kategoriler</option>
@@ -739,6 +789,7 @@
           <thead class="bg-slate-50">
             <tr>
               <th class="px-3 py-2 text-left">Ürün</th>
+              <th class="px-3 py-2 text-left">Firma</th>
               <th class="px-3 py-2 text-left">Dönem</th>
               <th class="px-3 py-2 num">Adet</th>
               <th class="px-3 py-2 num">Ciro (TL)</th>
@@ -758,20 +809,26 @@
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
       <!-- Satış Girişi -->
-      <div id="salesEntryCard" class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 transition-shadow">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
         <h3 class="font-bold text-slate-900 mb-4">➕ Satış Girişi</h3>
-        <div id="s_edit_banner" class="hidden mb-3 flex items-center justify-between bg-blue-50 border border-blue-200 rounded-lg px-3 py-2">
-          <span class="text-xs text-blue-800 font-medium" id="s_edit_banner_text"></span>
-          <button onclick="cancelSalesEdit()" class="text-xs text-blue-600 hover:text-blue-800 underline ml-2 whitespace-nowrap">İptal</button>
-        </div>
         <div class="space-y-3">
           <div>
-            <label class="text-xs font-medium text-slate-600">Kategori</label>
-            <select id="s_entry_group" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"></select>
+            <label class="text-xs font-medium text-slate-600">Firma (verinin çekildiği veritabanı)</label>
+            <select id="s_company" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+              <option value="kozmetik">Azra Grup Kozmetik Pazarlama San. ve Tic. Ltd. Şti.</option>
+              <option value="makine">Azra Grup Makine San. ve Tic. Ltd. Şti.</option>
+              <option value="azra1">Azra1</option>
+            </select>
           </div>
-          <div>
-            <label class="text-xs font-medium text-slate-600">Ürün</label>
-            <select id="s_product" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"></select>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-xs font-medium text-slate-600">Kategori</label>
+              <select id="s_entry_group" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"></select>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600">Ürün</label>
+              <select id="s_product" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"></select>
+            </div>
           </div>
           <div class="grid grid-cols-2 gap-2">
             <div>
@@ -1436,22 +1493,6 @@
 </div>
 
 <!-- Confirm modal -->
-<!-- Satış kaydı not/detay modalı -->
-<div id="saleDetailModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4" onclick="if(event.target===this)this.classList.add('hidden')">
-  <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full">
-    <div class="p-6">
-      <h3 class="text-lg font-bold text-slate-900 mb-1" id="saleDetailTitle"></h3>
-      <p class="text-xs text-slate-500 mb-3" id="saleDetailMeta"></p>
-      <div class="text-xs font-semibold text-slate-600 mb-1">📝 Not</div>
-      <div id="saleDetailNote" class="bg-slate-50 border border-slate-200 rounded-lg p-3 text-sm text-slate-700 whitespace-pre-wrap break-words max-h-64 overflow-y-auto"></div>
-      <div class="flex gap-2 mt-4">
-        <button onclick="document.getElementById('saleDetailModal').classList.add('hidden'); editSalesEntry(document.getElementById('saleDetailModal').dataset.saleId);" class="flex-1 py-2 bg-blue-50 text-blue-700 border border-blue-200 rounded-lg text-sm font-semibold hover:bg-blue-100">✏️ Düzenle</button>
-        <button onclick="document.getElementById('saleDetailModal').classList.add('hidden')" class="flex-1 py-2 bg-slate-900 text-white rounded-lg text-sm font-semibold hover:bg-slate-700">Kapat</button>
-      </div>
-    </div>
-  </div>
-</div>
-
 <div id="confirmModal" class="hidden fixed inset-0 z-50 modal-backdrop flex items-center justify-center p-4">
   <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full">
     <div class="p-6">
@@ -1920,6 +1961,7 @@ async function loadFromSupabase() {
     state.settings = setRes.data ? { ...DEFAULT_SETTINGS, ...setRes.data.data } : DEFAULT_SETTINGS;
     state.history = (histRes.data || []).map(r => r.data);
     state.sales = (salesRes.data || []).map(r => r.data);
+    normalizeSalesCompanies();
     state.service = (svcRes.data || []).map(r => r.data);
     state.export_prices = {};
     (epRes.data || []).forEach(r => { state.export_prices[r.id] = r.data; });
@@ -2089,7 +2131,17 @@ function renderProducts() {
   document.getElementById('statStockValue').textContent = fmtTL(stockValueTL);
   document.getElementById('statStockValueUSD').textContent = usdRate > 0 ? fmtUSD(stockValueTL / usdRate) : '';
 
-  tbody.innerHTML = filtered.map(({ p, idx, calc }) => {
+  // ---- Kategori bazlı akordeon gruplama ----
+  const byGroup = {};
+  filtered.forEach(x => { (byGroup[x.p.group] = byGroup[x.p.group] || []).push(x); });
+  // Arama ya da uyarı filtresi aktifken sonuçlar görünsün diye gruplar geçici olarak açık davranır
+  const forceOpen = !!search || (state.filter.warning && state.filter.warning !== 'all');
+  const orderedGroups = state.categories.filter(c => byGroup[c.id]).map(c => ({ id: c.id, name: c.name }));
+  Object.keys(byGroup).forEach(gid => {
+    if (!state.categories.some(c => c.id === gid)) orderedGroups.push({ id: gid, name: 'Diğer' });
+  });
+
+  const productRowHtml = ({ p, idx, calc }) => {
     const cat = getCategoryById(p.group);
     const rowClass = calc.below_min ? 'warn-bg warn-row' : 'ok-bg ok-row';
     const profitClass = calc.profit_pct >= 0.5 ? 'text-emerald-700 font-medium' : (calc.profit_pct >= 0 ? 'text-amber-700' : 'text-red-700');
@@ -2179,6 +2231,30 @@ function renderProducts() {
           <button class="deleteBtn pill-btn bg-red-50 hover:bg-red-100 text-red-700" data-idx="${idx}">Sil</button>
         </td>
       </tr>`;
+  };
+
+  tbody.innerHTML = orderedGroups.map(g => {
+    const items = byGroup[g.id];
+    const open = forceOpen || expandedProductGroups.has(g.id);
+    const grpStockTL = items.reduce((s, x) => s + x.calc.stock_value_tl, 0);
+    const grpWarn = items.filter(x => x.calc.below_min).length;
+    const grpPriced = items.filter(x => x.calc.active_price_tl > 0);
+    const grpMargin = grpPriced.length ? grpPriced.reduce((s, x) => s + x.calc.profit_pct, 0) / grpPriced.length : null;
+    const header = `<tr class="bg-slate-50 cursor-pointer select-none hover:bg-slate-100 transition-colors" onclick="toggleProductGroup('${g.id}')">
+      <td colspan="12" class="px-3 py-2.5">
+        <div class="flex items-center gap-3 flex-wrap">
+          <span class="text-slate-400 text-xs w-3 inline-block">${open ? '▼' : '▶'}</span>
+          <span class="group-badge grp-${g.id} font-semibold">${escapeHtml(g.name)}</span>
+          <span class="text-xs text-slate-500">${items.length} ürün</span>
+          ${grpWarn ? `<span class="text-[10px] px-1.5 py-0.5 rounded bg-red-100 text-red-700 font-medium">⚠ ${grpWarn} uyarılı</span>` : ''}
+          <span class="ml-auto flex items-center gap-4 text-xs">
+            <span class="text-slate-600">Stok: <span class="font-semibold num text-slate-800">${fmtTL(grpStockTL)}</span></span>
+            ${grpMargin != null ? `<span class="text-slate-600">Ort. Marj: <span class="font-semibold num ${grpMargin >= state.settings.min_markup_pct / 100 ? 'text-emerald-700' : 'text-red-600'}">${fmtPct(grpMargin)}</span></span>` : ''}
+          </span>
+        </div>
+      </td>
+    </tr>`;
+    return header + (open ? items.map(productRowHtml).join('') : '');
   }).join('');
 
   tbody.querySelectorAll('.editBtn').forEach(b => b.onclick = () => openProductModal(parseInt(b.dataset.idx)));
@@ -2252,6 +2328,61 @@ function renderRateBar() {
 }
 
 // ============ ANALYTICS ============
+// ---- Grup şirketleri (satış kayıtlarındaki firma boyutu) ----
+const COMPANIES = [
+  { id: 'kozmetik', name: 'Azra Grup Kozmetik Pazarlama San. ve Tic. Ltd. Şti.', short: 'Kozmetik', color: '#0ea5e9' },
+  { id: 'makine',   name: 'Azra Grup Makine San. ve Tic. Ltd. Şti.',             short: 'Makine',   color: '#8b5cf6' },
+  { id: 'azra1',    name: 'Azra1',                                               short: 'Azra1',    color: '#f59e0b' },
+];
+const getCompanyById = (id) => COMPANIES.find(c => c.id === id) || COMPANIES[0];
+const saleCompany = (s) => s.company || 'kozmetik';
+// Satış kayıtları tablosunda açık duran kategori grupları (akordeon)
+const expandedSalesGroups = new Set();
+function toggleSalesGroup(grpId) {
+  if (expandedSalesGroups.has(grpId)) expandedSalesGroups.delete(grpId);
+  else expandedSalesGroups.add(grpId);
+  renderSalesTable();
+}
+
+// Ana sayfa analiz bölümü geçişi (Genel Bakış / Satış / Ürün / Satın Alma / Servis / Risk)
+function showHomeSection(sec) {
+  document.querySelectorAll('.home-sec').forEach(el => el.classList.toggle('hidden', el.id !== 'homeSec-' + sec));
+  document.querySelectorAll('.home-sec-btn').forEach(btn => {
+    const active = btn.dataset.sec === sec;
+    btn.className = 'home-sec-btn pill-btn ' + (active ? 'bg-slate-900 text-white' : 'bg-white border border-slate-200 hover:bg-slate-50');
+  });
+  // Grafikler gizli container'da doğru boyutlanamaz → bölüm görünür olduktan sonra yeniden çiz
+  setTimeout(() => {
+    if (sec === 'overview')   { renderHome(); runHomeRateSimulation(); }
+    if (sec === 'product')    { renderAnalytics(); renderAbcAnalysis(); }
+    if (sec === 'sales')      { renderCompanyComparison(); renderAnalytics(); }
+    if (sec === 'purchasing') { renderPurchaseAnalytics(); }
+    if (sec === 'service')    { renderServiceAnalyticsSummary(); }
+    if (sec === 'risk')       { renderAnalytics(); }
+  }, 50);
+}
+
+// Ürünler tablosunda açık duran kategori grupları (akordeon)
+const expandedProductGroups = new Set();
+function toggleProductGroup(grpId) {
+  if (expandedProductGroups.has(grpId)) expandedProductGroups.delete(grpId);
+  else expandedProductGroups.add(grpId);
+  renderProducts();
+}
+
+// Satış sekmesindeki firma filtresine göre kayıt eşleşmesi ('' = grup toplamı)
+function salesCompanyMatch(s) {
+  const comp = document.getElementById('s_filter_company')?.value || '';
+  return !comp || saleCompany(s) === comp;
+}
+// Eski kayıtlar firma alanı olmadan girildi; hepsi Kozmetik'ten çekilmişti
+function normalizeSalesCompanies() {
+  (state.sales || []).forEach(s => {
+    if (!s.company) s.company = 'kozmetik';
+    if (!s.id) s.id = 'sale_' + Date.now() + '_' + Math.random().toString(36).slice(2, 8);
+  });
+}
+
 const charts = {};
 const GROUP_COLORS = {
   tiras_makinesi: '#3b82f6',
@@ -2490,6 +2621,7 @@ function renderAll() {
   renderAnalytics();
   renderAbcAnalysis();
   renderServiceAnalyticsSummary();
+  renderCompanyComparison();
   renderSalesTab();
   renderServiceTab();
   renderExpPricesTab();
@@ -2500,7 +2632,6 @@ const TAB_NAV_META = {
   purchasing: { icon: '🛒', label: 'Satın Alma',              desc: 'Sipariş, tedarikçi ve teslimat takibi' },
   sales:      { icon: '💰', label: 'Satış Takibi',            desc: 'Aylık satış girişi ve raporlar' },
   service:    { icon: '🔧', label: 'Teknik Servis',           desc: 'Servis kayıtları ve yedek parça' },
-  analytics:  { icon: '📊', label: 'Analitik',                desc: 'Sermaye, kâr ve trend analizleri' },
   categories: { icon: '🗂️', label: 'Kategoriler & Vergiler',  desc: 'Gümrük, ÖTV ve KDV oranları' },
   settings:   { icon: '⚙️', label: 'Ayarlar',                 desc: 'Kur kaynağı ve genel parametreler' },
   history:    { icon: '📚', label: 'Fiyat Geçmişi',           desc: 'Ürün fiyat değişiklik kayıtları' },
@@ -2573,7 +2704,7 @@ function renderHome() {
   if (cardsEl) {
     cardsEl.innerHTML =
       kpi('💰 Stok Sermayesi', fmtTL(totalStockTL), state.products.length + ' ürün') +
-      kpi(`📈 ${year} Ciro`, fmtTL(salesRevenue), salesQty.toLocaleString('tr-TR') + ' adet satış') +
+      kpi(`📈 ${year} Ciro`, fmtTL(salesRevenue), salesQty.toLocaleString('tr-TR') + ' adet · grup konsolide') +
       kpi(`💵 ${year} Kar`, fmtTL(salesProfit), 'Marj: ' + fmtPct(salesMargin), salesProfit >= 0 ? 'text-emerald-700' : 'text-red-600') +
       kpi('🎯 Aylık Kar Projeksiyonu', fmtTL(monthlyProfitProj), 'Satış tahminlerine göre', 'text-emerald-700') +
       kpi('⚠️ Fiyatı Min. Altında', belowMin.length + ' ürün', belowMin.length ? 'Acil fiyat revizyonu' : 'Sorun yok', belowMin.length ? 'text-red-600' : 'text-emerald-700') +
@@ -3071,7 +3202,7 @@ function importBackup(file) {
       if (d.categories) state.categories = d.categories;
       if (d.settings) state.settings = { ...DEFAULT_SETTINGS, ...d.settings };
       if (d.history) state.history = d.history;
-      if (d.sales) state.sales = d.sales;
+      if (d.sales) { state.sales = d.sales; normalizeSalesCompanies(); }
       if (d.service) state.service = d.service;
       if (d.export_prices) state.export_prices = d.export_prices;
       if (d.spare_parts) state.spare_parts = d.spare_parts;
@@ -3281,6 +3412,20 @@ function exportHomeReport() {
   rows.push(['Min. Fiyat Altında Ürün', belowMin.length]);
   rows.push(['Yüksek Kur Riskli Ürün', highRisk.length]);
   rows.push([]);
+  rows.push(['ŞİRKET KIRILIMI — ' + year + ' (Grup Konsolide)']);
+  rows.push(['Firma', 'Ciro TL', 'Kar TL', 'Marj %', 'Adet']);
+  COMPANIES.forEach(c => {
+    let cRev = 0, cCost = 0, cQty = 0;
+    yearSales.forEach(s => {
+      if (saleCompany(s) !== c.id) return;
+      cRev += (s.revenue || 0);
+      cCost += (costMap[s.productId] || 0) * (s.qty || 0);
+      cQty += (s.qty || 0);
+    });
+    const cProfit = cRev - cCost;
+    rows.push([c.name, cRev.toFixed(2), cProfit.toFixed(2), cRev > 0 ? (cProfit / cRev * 100).toFixed(1) : '0', cQty]);
+  });
+  rows.push([]);
   rows.push(['MİN. FİYAT ALTINDAKİ ÜRÜNLER']);
   rows.push(['Ürün', 'Aktif Fiyat TL', 'Min. Satış TL', 'Fark TL']);
   belowMin.forEach(x => rows.push([x.p.name, x.calc.active_price_tl.toFixed(2), x.calc.min_sale_price.toFixed(2), (x.calc.min_sale_price - x.calc.active_price_tl).toFixed(2)]));
@@ -3383,6 +3528,100 @@ function renderServiceAnalyticsSummary() {
   });
 }
 
+function renderCompanyComparison() {
+  const cardsEl = document.getElementById('cmpCompanyCards');
+  if (!cardsEl || typeof Chart === 'undefined') return;
+  const year = new Date().getFullYear();
+  const sub = document.getElementById('cmpSubtitle');
+  if (sub) sub.textContent = `${year} satış kayıtlarının firma boyutuna göre kırılımı · genel analizler her zaman grup toplamını gösterir`;
+
+  const costMap = {};
+  state.products.forEach(p => { costMap[p.id] = calculate(p).total_cost; });
+
+  // Firma bazlı toplam + aylık ciro matrisi
+  const stats = {};
+  COMPANIES.forEach(c => { stats[c.id] = { rev: 0, cost: 0, qty: 0, monthly: Array(12).fill(0) }; });
+  let groupRev = 0;
+  (state.sales || []).forEach(s => {
+    if (s.year !== year) return;
+    const st = stats[saleCompany(s)];
+    if (!st) return;
+    const rev = s.revenue || 0;
+    st.rev += rev;
+    st.cost += (costMap[s.productId] || 0) * (s.qty || 0);
+    st.qty += (s.qty || 0);
+    groupRev += rev;
+    const i = (s.month || 1) - 1;
+    if (i >= 0 && i < 12) st.monthly[i] += rev;
+  });
+
+  // ---- Firma kartları ----
+  cardsEl.innerHTML = COMPANIES.map(c => {
+    const st = stats[c.id];
+    const profit = st.rev - st.cost;
+    const margin = st.rev > 0 ? profit / st.rev : 0;
+    const share = groupRev > 0 ? st.rev / groupRev * 100 : 0;
+    return `<div class="border rounded-lg p-3" style="border-color:${c.color}40; background:${c.color}0d;">
+      <div class="flex items-center gap-2 mb-1">
+        <span class="w-2.5 h-2.5 rounded-full" style="background:${c.color}"></span>
+        <span class="text-sm font-bold text-slate-900 truncate" title="${escapeHtml(c.name)}">${c.short}</span>
+        <span class="ml-auto text-[11px] font-semibold text-slate-500">Pay: %${share.toFixed(1)}</span>
+      </div>
+      <div class="text-lg font-bold text-slate-900 num">${fmtTL(st.rev)}</div>
+      <div class="text-xs text-slate-500 mt-0.5">${st.qty.toLocaleString('tr-TR')} adet · Kar: <span class="${profit >= 0 ? 'text-emerald-700' : 'text-red-600'} font-semibold">${fmtTL(profit)}</span> (${fmtPct(margin)})</div>
+    </div>`;
+  }).join('');
+
+  // ---- Aylık yığılmış ciro ----
+  destroyChart('companyMonthly');
+  charts.companyMonthly = new Chart(document.getElementById('chartCompanyMonthly'), {
+    type: 'bar',
+    data: {
+      labels: MONTHS.map(mo => mo.slice(0, 3)),
+      datasets: COMPANIES.map(c => ({
+        label: c.short, data: stats[c.id].monthly,
+        backgroundColor: c.color + 'cc', borderRadius: 3, stack: 'ciro',
+      })),
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: { callbacks: {
+          label: (ctx) => ctx.dataset.label + ': ' + fmtTL(ctx.parsed.y),
+          footer: (items) => 'Grup Toplamı: ' + fmtTL(items.reduce((s, it) => s + it.parsed.y, 0)),
+        } },
+      },
+      scales: {
+        x: { stacked: true, ticks: { font: { size: 10 } } },
+        y: { stacked: true, ticks: { callback: (v) => new Intl.NumberFormat('tr-TR', { notation: 'compact' }).format(v) + ' ₺', font: { size: 10 } } },
+      },
+    },
+  });
+
+  // ---- Yıllık ciro payı ----
+  destroyChart('companyShare');
+  charts.companyShare = new Chart(document.getElementById('chartCompanyShare'), {
+    type: 'doughnut',
+    data: {
+      labels: COMPANIES.map(c => c.short),
+      datasets: [{ data: COMPANIES.map(c => stats[c.id].rev), backgroundColor: COMPANIES.map(c => c.color + 'cc'), borderWidth: 2, borderColor: '#fff' }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false, cutout: '60%',
+      plugins: {
+        legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+        tooltip: { callbacks: {
+          label: (ctx) => {
+            const pct = groupRev > 0 ? (ctx.parsed / groupRev * 100).toFixed(1) : '0';
+            return `${ctx.label}: ${fmtTL(ctx.parsed)} (%${pct})`;
+          },
+        } },
+      },
+    },
+  });
+}
+
 function init() {
   // Veri artık onLoginSuccess içinde Supabase'den yükleniyor
   // Burada sadece event listener'ları bağlıyoruz
@@ -3402,9 +3641,6 @@ function init() {
       if (btn.dataset.tab === 'purchasing') {
         renderPurchasing();
       }
-      if (btn.dataset.tab === 'analytics') {
-        setTimeout(() => { renderAnalytics(); renderAbcAnalysis(); renderServiceAnalyticsSummary(); }, 50);
-      }
       if (btn.dataset.tab === 'sales') {
         setTimeout(() => renderSalesTab(), 50);
       }
@@ -3419,7 +3655,7 @@ function init() {
   document.getElementById('trendProductFilter').onchange = () => renderTrendChart();
 
   document.getElementById('searchInput').oninput = (e) => { state.filter.search = e.target.value; renderProducts(); };
-  document.getElementById('groupFilter').onchange = (e) => { state.filter.group = e.target.value; renderProducts(); };
+  document.getElementById('groupFilter').onchange = (e) => { state.filter.group = e.target.value; if (e.target.value) expandedProductGroups.add(e.target.value); renderProducts(); };
   document.getElementById('warningFilter').onchange = (e) => { state.filter.warning = e.target.value; renderProducts(); };
 
   document.getElementById('addProductBtn').onclick = () => openProductModal(null);
@@ -3432,6 +3668,7 @@ function init() {
 
   // Karar destek modülü event'leri
   document.getElementById('homeSimSlider').oninput = runHomeRateSimulation;
+  document.querySelectorAll('.home-sec-btn').forEach(btn => btn.onclick = () => showHomeSection(btn.dataset.sec));
   document.getElementById('homeExportBtn').onclick = exportHomeReport;
   document.getElementById('exportAllBtn').onclick = exportAll;
   document.getElementById('importAllBtn').onclick = () => document.getElementById('importFile').click();
@@ -4023,6 +4260,9 @@ const MONTHS = ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağu
 
 
 function applySalesFilters() {
+  // Kategori filtresi seçildiyse o grubu bir kez aç (kullanıcı sonra kapatabilir)
+  const selGroup = document.getElementById('s_filter_group')?.value || '';
+  if (selGroup) expandedSalesGroups.add(selGroup);
   renderSalesSummaryCards();
   renderSalesChart();
   renderSalesGroupPie();
@@ -4071,7 +4311,7 @@ function renderRecentSales() {
     return `<div class="flex items-center justify-between border-b border-slate-100 pb-2">
       <div class="min-w-0">
         <div class="text-sm font-medium text-slate-800 truncate">${name}</div>
-        <div class="text-xs text-slate-500">${MONTHS[s.month-1]} ${s.year} · ${s.no_stock ? 'stok yok' : (s.qty||0)+' ad'}</div>
+        <div class="text-xs text-slate-500"><span style="color:${getCompanyById(saleCompany(s)).color}">●</span> ${getCompanyById(saleCompany(s)).short} · ${MONTHS[s.month-1]} ${s.year} · ${s.no_stock ? 'stok yok' : (s.qty||0)+' ad'}</div>
         ${noteRow}
       </div>
       <div class="text-sm font-semibold text-slate-700 whitespace-nowrap ml-2">${s.no_stock ? '—' : fmtTL2(s.revenue||0)}</div>
@@ -4080,14 +4320,14 @@ function renderRecentSales() {
 }
 
 function populateSalesProductSelects() {
-  // Kategori filtresi dropdown
+  // ---- Filtre barı: kategori dropdown ----
   const sGroup = document.getElementById('s_filter_group');
   if (sGroup && sGroup.options.length <= 1) {
     sGroup.innerHTML = '<option value="">Tüm Kategoriler</option>' +
       state.categories.map(c => '<option value="' + c.id + '">' + escapeHtml(c.name) + '</option>').join('');
   }
 
-  // Ürün filtresi — kategoriye göre filtrele
+  // ---- Filtre barı: ürün dropdown (kategoriye göre daralır) ----
   function refreshProductFilter() {
     const grp = document.getElementById('s_filter_group')?.value || '';
     const sFilter = document.getElementById('s_filter_product');
@@ -4098,32 +4338,30 @@ function populateSalesProductSelects() {
   refreshProductFilter();
   if (sGroup) sGroup.onchange = () => { refreshProductFilter(); };
 
-  // Satış girişi: önce kategori, sonra ürün (kademeli dropdown)
-  const sEntryGroup = document.getElementById('s_entry_group');
-  const sProduct = document.getElementById('s_product');
-
-  if (sEntryGroup) {
-    const prevGrp = sEntryGroup.value || '';
-    sEntryGroup.innerHTML = '<option value="">— Tüm Kategoriler —</option>' +
+  // ---- Satış girişi: kategori dropdown (ürün listesini daraltır) ----
+  const eGroup = document.getElementById('s_entry_group');
+  if (eGroup && eGroup.options.length <= 0) {
+    eGroup.innerHTML = '<option value="">Tüm Kategoriler</option>' +
       state.categories.map(c => '<option value="' + c.id + '">' + escapeHtml(c.name) + '</option>').join('');
-    sEntryGroup.value = prevGrp; // kategori hâlâ varsa seçimi koru
   }
 
+  // ---- Satış girişi: ürün dropdown (seçili kategoriye göre, seçim korunur) ----
   function refreshEntryProducts() {
+    const sProduct = document.getElementById('s_product');
     if (!sProduct) return;
-    const grp = sEntryGroup?.value || '';
-    const prevPid = sProduct.value || '';
-    const prods = (grp ? state.products.filter(p => p.group === grp) : state.products)
-      .slice().sort((a, b) => (a.name || '').localeCompare(b.name || '', 'tr'));
-    sProduct.innerHTML = '<option value="">— Ürün seçin —</option>' +
-      prods.map(p => '<option value="' + p.id + '">' + escapeHtml(p.name) + '</option>').join('');
-    if (prevPid && prods.some(p => p.id === prevPid)) sProduct.value = prevPid;
+    const grp = eGroup?.value || '';
+    const prevPid = sProduct.value;
+    const filtered = grp ? state.products.filter(p => p.group === grp) : state.products;
+    sProduct.innerHTML = filtered.map(p => '<option value="' + p.id + '">' + escapeHtml(p.name) + '</option>').join('');
+    // Önceki seçim yeni listede hâlâ varsa koru
+    if (prevPid && filtered.some(p => p.id === prevPid)) sProduct.value = prevPid;
     updateSalesCostInfo();
   }
-
-  if (sEntryGroup) sEntryGroup.onchange = refreshEntryProducts;
-  if (sProduct) sProduct.onchange = updateSalesCostInfo;
   refreshEntryProducts();
+  if (eGroup) eGroup.onchange = refreshEntryProducts;
+
+  const sProduct = document.getElementById('s_product');
+  if (sProduct) sProduct.onchange = updateSalesCostInfo;
 }
 
 function updateSalesCostInfo() {
@@ -4159,6 +4397,7 @@ function getFilteredSales() {
   const year  = parseInt(document.getElementById('s_filter_year')?.value) || new Date().getFullYear();
   const month = parseInt(document.getElementById('s_filter_month')?.value) || 0;
   return state.sales.filter(s => {
+    if (!salesCompanyMatch(s)) return false;
     if (s.year !== year) return false;
     if (month && s.month !== month) return false;
     if (pid && s.productId !== pid) return false;
@@ -4172,7 +4411,7 @@ function getFilteredSales() {
 
 function renderSalesSummaryCards() {
   const year = parseInt(document.getElementById('s_filter_year')?.value) || new Date().getFullYear();
-  const yearSales = state.sales.filter(s => s.year === year);
+  const yearSales = state.sales.filter(s => s.year === year && salesCompanyMatch(s));
   const totalRev = yearSales.reduce((a,s) => a + (s.revenue||0), 0);
   const totalQty = yearSales.reduce((a,s) => a + (s.qty||0), 0);
   const totalCost = yearSales.reduce((a,s) => {
@@ -4221,6 +4460,7 @@ function renderSalesChart() {
   function filterSales(sales) {
     return sales.filter(s => {
       if (s.no_stock) return false;
+      if (!salesCompanyMatch(s)) return false;
       if (selPid && s.productId !== selPid) return false;
       if (selGroup) {
         const p = state.products.find(x => x.id === s.productId);
@@ -4317,7 +4557,7 @@ function renderSalesChart() {
 
 function renderSalesGroupPie() {
   const year = parseInt(document.getElementById('s_filter_year')?.value) || new Date().getFullYear();
-  const yearSales = state.sales.filter(s => s.year === year && !s.no_stock);
+  const yearSales = state.sales.filter(s => s.year === year && !s.no_stock && salesCompanyMatch(s));
 
   // Gruplara göre ciro topla
   const byGroup = {};
@@ -4398,10 +4638,10 @@ function renderSalesGroupPie() {
 
 
 function renderTopSellers() {
-  // Filtrelere (yıl, ay, kategori, ürün) tam uyumlu
-  const sales = getFilteredSales();
+  const year = parseInt(document.getElementById('s_filter_year')?.value) || new Date().getFullYear();
+  const yearSales = state.sales.filter(s => s.year === year && salesCompanyMatch(s));
   const byProduct = {};
-  sales.forEach(s => {
+  yearSales.forEach(s => {
     if (!byProduct[s.productId]) byProduct[s.productId] = { revenue: 0, qty: 0 };
     byProduct[s.productId].revenue += s.revenue || 0;
     byProduct[s.productId].qty += s.qty || 0;
@@ -4409,7 +4649,7 @@ function renderTopSellers() {
   const sorted = Object.entries(byProduct).sort((a,b) => b[1].revenue - a[1].revenue).slice(0, 8);
   const el = document.getElementById('topSellersList');
   if (!el) return;
-  if (!sorted.length) { el.innerHTML = '<p class="text-sm text-slate-400">Filtreye uyan satış kaydı yok.</p>'; return; }
+  if (!sorted.length) { el.innerHTML = '<p class="text-sm text-slate-400">Henüz satış kaydı yok.</p>'; return; }
   const maxRev = sorted[0][1].revenue;
   el.innerHTML = sorted.map(([pid, d], i) => {
     const p = state.products.find(x => x.id === pid);
@@ -4427,7 +4667,7 @@ function renderTopSellers() {
 
 function renderStockTurnover() {
   const year = parseInt(document.getElementById('s_filter_year')?.value) || new Date().getFullYear();
-  const yearSales = state.sales.filter(s => s.year === year);
+  const yearSales = state.sales.filter(s => s.year === year && salesCompanyMatch(s));
   const monthsWithData = new Set(yearSales.map(s => s.month)).size || 1;
   const byProduct = {};
   yearSales.forEach(s => {
@@ -4463,150 +4703,92 @@ function renderStockTurnover() {
   }).join('') + '</tbody></table>';
 }
 
-// Hangi kategori grupları açık? (oturum içi, kalıcı değil)
-const salesGroupsOpen = {};
-
-function toggleSalesGroup(catId) {
-  salesGroupsOpen[catId] = !salesGroupsOpen[catId];
-  renderSalesTable();
-}
-
 function renderSalesTable() {
-  // Eski kayıtlarda id yoksa üret (düzenle/sil id ile çalışıyor)
-  state.sales.forEach((s, i) => { if (!s.id) s.id = 'sale_legacy_' + i + '_' + s.productId + '_' + s.year + '_' + s.month; });
-
-  const filtered = getFilteredSales().sort((a,b) => b.year*100+b.month - (a.year*100+a.month));
   const el = document.getElementById('salesTbody');
   if (!el) return;
+  const filtered = getFilteredSales().sort((a,b) => b.year*100+b.month - (a.year*100+a.month));
   if (!filtered.length) {
-    el.innerHTML = '<tr><td colspan="9" class="px-3 py-8 text-center text-slate-400">Filtreye uyan satış kaydı yok.</td></tr>';
+    el.innerHTML = '<tr><td colspan="10" class="px-3 py-8 text-center text-slate-400">Filtrelere uyan satış kaydı yok.</td></tr>';
     return;
   }
 
-  // Kategoriye göre grupla — kapalı gruplar render edilmez (hız için)
-  const groups = {};
+  // Birim maliyetleri bir kez hesapla (satır başına calculate çağırmamak için)
+  const costMap = {};
+  state.products.forEach(p => { costMap[p.id] = calculateProduct(p).totalCost; });
+  const prodMap = {};
+  state.products.forEach(p => { prodMap[p.id] = p; });
+
+  // Kategoriye göre grupla (ürünü silinmiş kayıtlar "Diğer" altında)
+  const byGroup = {};
   filtered.forEach(s => {
-    const p = state.products.find(x => x.id === s.productId);
-    const catId = (p && p.group) || '_other';
-    if (!groups[catId]) groups[catId] = [];
-    groups[catId].push(s);
+    const p = prodMap[s.productId];
+    const grp = p ? p.group : '_other';
+    (byGroup[grp] = byGroup[grp] || []).push(s);
   });
 
-  let html = '';
-  Object.entries(groups).forEach(([catId, sales]) => {
-    const cat = state.categories.find(c => c.id === catId);
-    const catName = cat ? escapeHtml(cat.name) : 'Diğer';
-    const open = !!salesGroupsOpen[catId];
-    const totalRev = sales.reduce((t, s) => t + (s.revenue||0), 0);
-    const totalQty = sales.reduce((t, s) => t + (s.qty||0), 0);
-    html += `<tr class="bg-slate-100/80 cursor-pointer hover:bg-slate-200/70 select-none" onclick="toggleSalesGroup('${catId}')">
-      <td colspan="9" class="px-3 py-2.5">
-        <span class="inline-block w-4 text-slate-500">${open ? '▾' : '▸'}</span>
-        <span class="font-semibold text-slate-800">${catName}</span>
-        <span class="text-xs text-slate-500 ml-2">${sales.length} kayıt · ${totalQty} ad · ${fmtTL2(totalRev)}</span>
+  // Kategori sırası: tanımlı kategoriler + Diğer
+  const ordered = state.categories.filter(c => byGroup[c.id]).map(c => ({ id: c.id, name: c.name }));
+  if (byGroup['_other']) ordered.push({ id: '_other', name: 'Diğer (silinmiş ürünler)' });
+
+  const rowHtml = (s) => {
+    const p = prodMap[s.productId];
+    const name = p ? escapeHtml(p.name) : s.productId;
+    const unitCost = costMap[s.productId] || 0;
+    const totalCost = unitCost * (s.qty||0);
+    const profit = (s.revenue||0) - totalCost;
+    const margin = s.revenue > 0 ? (profit / s.revenue * 100) : 0;
+    const marginColor = margin >= 50 ? 'text-green-700' : margin >= 30 ? 'text-amber-700' : 'text-red-700';
+    const noStockBadge = s.no_stock ? '<span class="inline-block bg-amber-100 text-amber-700 text-[10px] px-1.5 py-0.5 rounded ml-1">stok yok</span>' : '';
+    const noteText = s.note ? escapeHtml(s.note) : '';
+    const noteCell = noteText
+      ? `<span class="text-slate-500 block max-w-[160px] truncate" title="${noteText}">📝 ${noteText}</span>`
+      : '<span class="text-slate-300">—</span>';
+    const c = getCompanyById(saleCompany(s));
+    return `<tr class="border-t border-slate-100 hover:bg-slate-50 ${s.no_stock ? 'opacity-60' : ''}">
+      <td class="px-3 py-2 pl-8 font-medium text-slate-800">${name}${noStockBadge}</td>
+      <td class="px-3 py-2"><span class="text-[10px] px-1.5 py-0.5 rounded font-medium whitespace-nowrap" style="background:${c.color}1a;color:${c.color}">${c.short}</span></td>
+      <td class="px-3 py-2 text-slate-600">${MONTHS[s.month-1]} ${s.year}</td>
+      <td class="px-3 py-2 num">${s.no_stock ? '<span class="text-amber-600">—</span>' : (s.qty||0) + ' ad'}</td>
+      <td class="px-3 py-2 num font-semibold">${s.no_stock ? '—' : fmtTL2(s.revenue||0)}</td>
+      <td class="px-3 py-2 num text-slate-500">${s.qty ? fmtTL2((s.revenue||0)/(s.qty)) : '—'}</td>
+      <td class="px-3 py-2 num text-slate-500">${fmtTL2(totalCost)}</td>
+      <td class="px-3 py-2 num font-semibold ${marginColor}">${s.no_stock ? '—' : margin.toFixed(1)+'%'}</td>
+      <td class="px-3 py-2 text-xs">${noteCell}</td>
+      <td class="px-3 py-2"><button onclick="deleteSalesEntry('${s.id}')" class="text-red-400 hover:text-red-700 text-xs">Sil</button></td>
+    </tr>`;
+  };
+
+  el.innerHTML = ordered.map(g => {
+    const items = byGroup[g.id];
+    const open = expandedSalesGroups.has(g.id);
+    let rev = 0, qty = 0, cost = 0;
+    items.forEach(s => {
+      rev += (s.revenue || 0);
+      qty += (s.qty || 0);
+      cost += (costMap[s.productId] || 0) * (s.qty || 0);
+    });
+    const margin = rev > 0 ? ((rev - cost) / rev * 100) : 0;
+    const header = `<tr class="bg-slate-50 cursor-pointer select-none hover:bg-slate-100 transition-colors" onclick="toggleSalesGroup('${g.id}')">
+      <td colspan="10" class="px-3 py-2.5">
+        <div class="flex items-center gap-3 flex-wrap">
+          <span class="text-slate-400 text-xs w-3 inline-block">${open ? '▼' : '▶'}</span>
+          <span class="group-badge grp-${g.id} font-semibold">${escapeHtml(g.name)}</span>
+          <span class="text-xs text-slate-500">${items.length} kayıt</span>
+          <span class="ml-auto flex items-center gap-4 text-xs">
+            <span class="text-slate-600">${qty.toLocaleString('tr-TR')} ad</span>
+            <span class="font-semibold text-slate-800 num">${fmtTL2(rev)}</span>
+            <span class="font-semibold num ${margin >= 50 ? 'text-green-700' : margin >= 30 ? 'text-amber-700' : 'text-red-700'}">%${margin.toFixed(1)}</span>
+          </span>
+        </div>
       </td>
     </tr>`;
-    if (open) html += sales.map(renderSalesRow).join('');
-  });
-  el.innerHTML = html;
-}
-
-function renderSalesRow(s) {
-  const p = state.products.find(x => x.id === s.productId);
-  const name = p ? escapeHtml(p.name) : s.productId;
-  const calc = p ? calculateProduct(p) : null;
-  const unitCost = calc ? calc.totalCost : 0;
-  const totalCost = unitCost * (s.qty||0);
-  const profit = (s.revenue||0) - totalCost;
-  const margin = s.revenue > 0 ? (profit / s.revenue * 100) : 0;
-  const marginColor = margin >= 50 ? 'text-green-700' : margin >= 30 ? 'text-amber-700' : 'text-red-700';
-  const noStockBadge = s.no_stock ? '<span class="inline-block bg-amber-100 text-amber-700 text-[10px] px-1.5 py-0.5 rounded ml-1">stok yok</span>' : '';
-  const noteText = s.note ? escapeHtml(s.note) : '';
-  const noteCell = noteText
-    ? `<span class="text-slate-500 block max-w-[160px] truncate cursor-pointer hover:text-blue-600 hover:underline" title="Tamamını görmek için tıkla" onclick="showSaleDetail('${s.id}')">📝 ${noteText}</span>`
-    : '<span class="text-slate-300">—</span>';
-  return `<tr class="border-t border-slate-100 hover:bg-slate-50 ${s.no_stock ? 'opacity-60' : ''}">
-    <td class="px-3 py-2 font-medium text-slate-800 cursor-pointer hover:text-blue-700" onclick="showSaleDetail('${s.id}')">${name}${noStockBadge}</td>
-    <td class="px-3 py-2 text-slate-600">${MONTHS[s.month-1]} ${s.year}</td>
-    <td class="px-3 py-2 num">${s.no_stock ? '<span class="text-amber-600">—</span>' : (s.qty||0) + ' ad'}</td>
-    <td class="px-3 py-2 num font-semibold">${s.no_stock ? '—' : fmtTL2(s.revenue||0)}</td>
-    <td class="px-3 py-2 num text-slate-500">${s.qty ? fmtTL2((s.revenue||0)/(s.qty)) : '—'}</td>
-    <td class="px-3 py-2 num text-slate-500">${fmtTL2(totalCost)}</td>
-    <td class="px-3 py-2 num font-semibold ${marginColor}">${s.no_stock ? '—' : margin.toFixed(1)+'%'}</td>
-    <td class="px-3 py-2 text-xs">${noteCell}</td>
-    <td class="px-3 py-2 whitespace-nowrap">
-      <button onclick="editSalesEntry('${s.id}')" class="text-blue-500 hover:text-blue-700 text-xs mr-2">Düzenle</button>
-      <button onclick="deleteSalesEntry('${s.id}')" class="text-red-400 hover:text-red-700 text-xs">Sil</button>
-    </td>
-  </tr>`;
-}
-
-function showSaleDetail(saleId) {
-  const s = state.sales.find(x => x.id === saleId);
-  if (!s) return;
-  const p = state.products.find(x => x.id === s.productId);
-  const modal = document.getElementById('saleDetailModal');
-  if (!modal) return;
-  modal.dataset.saleId = saleId;
-  document.getElementById('saleDetailTitle').textContent = p ? p.name : s.productId;
-  document.getElementById('saleDetailMeta').textContent =
-    MONTHS[s.month-1] + ' ' + s.year + ' · ' + (s.no_stock ? 'stok yok' : (s.qty||0) + ' ad · ' + fmtTL2(s.revenue||0));
-  document.getElementById('saleDetailNote').textContent = s.note || 'Bu kayda not eklenmemiş.';
-  modal.classList.remove('hidden');
-}
-
-function editSalesEntry(saleId) {
-  const s = state.sales.find(x => x.id === saleId);
-  if (!s) return;
-  const p = state.products.find(x => x.id === s.productId);
-  window._editingSaleId = saleId;
-
-  // Kategori → ürün seçimini ayarla
-  const grpSel = document.getElementById('s_entry_group');
-  if (grpSel) grpSel.value = (p && p.group) || '';
-  populateSalesProductSelects();
-  const prodSel = document.getElementById('s_product');
-  if (prodSel) prodSel.value = s.productId;
-
-  document.getElementById('s_month').value = s.month;
-  document.getElementById('s_year').value = s.year;
-  document.getElementById('s_no_stock').checked = !!s.no_stock;
-  document.getElementById('s_qty_row').classList.toggle('opacity-40', !!s.no_stock);
-  document.getElementById('s_revenue_row').classList.toggle('opacity-40', !!s.no_stock);
-  document.getElementById('s_qty').value = s.no_stock ? '' : (s.qty || '');
-  document.getElementById('s_revenue').value = s.no_stock ? '' : (s.revenue || '');
-  document.getElementById('s_note').value = s.note || '';
-  updateSalesCostInfo();
-
-  // Düzenleme modunu göster + forma kaydır
-  const banner = document.getElementById('s_edit_banner');
-  if (banner) {
-    banner.classList.remove('hidden');
-    document.getElementById('s_edit_banner_text').textContent =
-      '✏️ Düzenleniyor: ' + (p ? p.name : s.productId) + ' — ' + MONTHS[s.month-1] + ' ' + s.year;
-  }
-  const card = document.getElementById('salesEntryCard');
-  if (card) {
-    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    card.classList.add('ring-2', 'ring-blue-400');
-    setTimeout(() => card.classList.remove('ring-2', 'ring-blue-400'), 1800);
-  }
-}
-
-function cancelSalesEdit() {
-  window._editingSaleId = null;
-  document.getElementById('s_edit_banner')?.classList.add('hidden');
-  document.getElementById('s_qty').value = '';
-  document.getElementById('s_revenue').value = '';
-  document.getElementById('s_note').value = '';
-  const ns = document.getElementById('s_no_stock');
-  if (ns) ns.checked = false;
-  document.getElementById('s_qty_row')?.classList.remove('opacity-40');
-  document.getElementById('s_revenue_row')?.classList.remove('opacity-40');
+    return header + (open ? items.map(rowHtml).join('') : '');
+  }).join('');
 }
 
 function saveSalesEntry() {
   const pid = document.getElementById('s_product').value;
+  const company = document.getElementById('s_company')?.value || 'kozmetik';
   const month = parseInt(document.getElementById('s_month').value);
   const year = parseInt(document.getElementById('s_year').value);
   const noStock = document.getElementById('s_no_stock')?.checked || false;
@@ -4617,22 +4799,9 @@ function saveSalesEntry() {
   if (!pid) { alert('Ürün seçmelisin!'); return; }
   if (!noStock && !qty) { alert('Satış adedi girilmeli ya da "stok yok" seçilmeli!'); return; }
 
-  // Düzenleme modundaysak: eski kaydı kaldır, stokunu geri ver
-  if (window._editingSaleId) {
-    const oldIdx = state.sales.findIndex(s => s.id === window._editingSaleId);
-    if (oldIdx >= 0) {
-      const old = state.sales[oldIdx];
-      const op = state.products.find(x => x.id === old.productId);
-      if (op && !old.no_stock) op.stock_qty = (op.stock_qty||0) + (old.qty||0);
-      state.sales.splice(oldIdx, 1);
-    }
-    window._editingSaleId = null;
-    document.getElementById('s_edit_banner')?.classList.add('hidden');
-  }
-
-  // Aynı ürün + ay + yıl varsa üzerine yaz
-  const existing = state.sales.findIndex(s => s.productId === pid && s.month === month && s.year === year);
-  const entry = { id: 'sale_'+Date.now(), productId: pid, month, year, qty, revenue, no_stock: noStock, note };
+  // Aynı firma + ürün + ay + yıl varsa üzerine yaz (farklı firmalar aynı ürünü aynı ayda satabilir)
+  const existing = state.sales.findIndex(s => s.productId === pid && s.month === month && s.year === year && saleCompany(s) === company);
+  const entry = { id: 'sale_'+Date.now(), productId: pid, company, month, year, qty, revenue, no_stock: noStock, note };
 
   if (existing >= 0) {
     const old = state.sales[existing];
@@ -4659,11 +4828,11 @@ function saveSalesEntry() {
 function deleteSalesEntry(saleId) {
   const entry = state.sales.find(s => s.id === saleId);
   if (!entry) return;
+  if (!confirm('Bu satış kaydı silinecek ve stok geri yüklenecek. Emin misin?')) return;
   // Stoku geri ver
   const p = state.products.find(x => x.id === entry.productId);
   if (p) { p.stock_qty = (p.stock_qty||0) + (entry.qty||0); }
   state.sales = state.sales.filter(s => s.id !== saleId);
-  if (window._editingSaleId === saleId) cancelSalesEdit();
   persist(); renderSalesTab(); renderProducts();
 }
 
@@ -4679,18 +4848,20 @@ function clearAllSales() {
 
 function exportSalesExcel() {
   const year = parseInt(document.getElementById('s_filter_year')?.value) || new Date().getFullYear();
-  const rows = [['Ürün','Ay','Yıl','Adet','Ciro (TL)','Birim Maliyet','Toplam Maliyet','Kar (TL)','Kar %','Not']];
-  state.sales.filter(s => s.year === year).forEach(s => {
+  const comp = document.getElementById('s_filter_company')?.value || '';
+  const rows = [['Firma','Ürün','Ay','Yıl','Adet','Ciro (TL)','Birim Maliyet','Toplam Maliyet','Kar (TL)','Kar %','Not']];
+  state.sales.filter(s => s.year === year && (!comp || saleCompany(s) === comp)).forEach(s => {
     const p = state.products.find(x => x.id === s.productId);
     const calc = p ? calculateProduct(p) : null;
     const cost = calc ? calc.totalCost * s.qty : 0;
     const profit = (s.revenue||0) - cost;
     const margin = s.revenue > 0 ? (profit/s.revenue*100).toFixed(1)+'%' : '—';
-    rows.push([p?.name||s.productId, MONTHS[s.month-1], s.year, s.qty, s.revenue||0, calc?.totalCost?.toFixed(2)||0, cost.toFixed(2), profit.toFixed(2), margin, s.note||'']);
+    rows.push([getCompanyById(saleCompany(s)).short, p?.name||s.productId, MONTHS[s.month-1], s.year, s.qty, s.revenue||0, calc?.totalCost?.toFixed(2)||0, cost.toFixed(2), profit.toFixed(2), margin, s.note||'']);
   });
   const csv = rows.map(r => r.join(',')).join('\n');
   const blob = new Blob(['\uFEFF'+csv], {type:'text/csv;charset=utf-8;'});
-  const a = document.createElement('a'); a.href = URL.createObjectURL(blob); a.download = `satis-${year}.csv`; a.click();
+  const a = document.createElement('a'); a.href = URL.createObjectURL(blob);
+  a.download = `satis-${year}${comp ? '-' + comp : '-grup'}.csv`; a.click();
 }
 
 
