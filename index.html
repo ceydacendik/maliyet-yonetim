@@ -293,6 +293,17 @@
     </div>
 
 
+
+    <!-- Stok Yaşlandırma -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-4">
+      <h3 class="text-base font-bold text-slate-900 mb-1">🕰️ Hareketsiz Stok Yaşlandırması</h3>
+      <p class="text-xs text-slate-500 mb-3">Son satış tarihinden bu yana geçen süreye göre stoktaki ürünler · uzun süredir hareket görmeyen sermaye kampanya/rasyonalizasyon adayıdır</p>
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 items-center">
+        <div style="height: 240px;"><canvas id="chartStockAging"></canvas></div>
+        <div id="agingCards" class="grid grid-cols-1 gap-2"></div>
+      </div>
+      <p class="text-[11px] text-slate-400 mt-3 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">📐 <strong>Hesap:</strong> Her ürün için son satış kaydının dönemi (ay/yıl) bulunur; bugünden farkı ay cinsinden hesaplanır ve ürün 0–3 / 3–6 / 6–12 / 12+ ay bandına, hiç satışı yoksa "Hiç satılmadı" bandına atanır. Yalnızca stok adedi &gt; 0 olan ürünler dahildir. Bağlı sermaye = stok adedi × birim toplam maliyet. Bantlar yaşlandıkça sermayenin likiditeye dönme olasılığı düşer.</p>
+    </div>
     </div>
     <div id="homeSec-sales" class="home-sec hidden">
     <!-- Grup Şirketleri Karşılaştırması -->
@@ -310,6 +321,43 @@
           <div style="height: 280px; position: relative;"><canvas id="chartCompanyShare"></canvas></div>
         </div>
       </div>
+    </div>
+
+    <!-- Satış dağılım grafikleri -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="text-base font-bold text-slate-900 mb-1">🥧 Kategori Bazlı Ciro Dağılımı</h3>
+        <p class="text-xs text-slate-500 mb-3" id="hSalesGroupSubtitle">Cari yıl, grup toplamı (3 firma konsolide)</p>
+        <div style="height: 260px; position: relative;"><canvas id="chartHSalesByGroup"></canvas></div>
+        <p class="text-[11px] text-slate-400 mt-3 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">📐 <strong>Hesap:</strong> Her kategorinin payı = o kategorideki ürünlerin yıllık ciro toplamı ÷ tüm kategorilerin ciro toplamı. "Stok yok" işaretli kayıtlar ciroya dahil edilmez.</p>
+      </div>
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="text-base font-bold text-slate-900 mb-1">🏅 En Çok Satan 10 Ürün (Ciro)</h3>
+        <p class="text-xs text-slate-500 mb-3" id="hSalesTopSubtitle">Cari yıl, grup toplamı</p>
+        <div style="height: 260px;"><canvas id="chartHSalesTop"></canvas></div>
+        <p class="text-[11px] text-slate-400 mt-3 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">📐 <strong>Hesap:</strong> Ürün bazında yıl içi tüm satış kayıtlarının ciroları toplanır ve azalan sırada ilk 10 gösterilir. Sıralama adede değil ciroya göredir; düşük adetli ama pahalı ürünler üstte çıkabilir.</p>
+      </div>
+    </div>
+
+    <!-- Satış Tahmini -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-4">
+      <h3 class="text-base font-bold text-slate-900 mb-1">🔮 Satış Tahmini & Stok Tükenme Uyarısı</h3>
+      <p class="text-xs text-slate-500 mb-3">Son 3 ayın gerçekleşen satışlarından hareketli ortalama ile gelecek ay projeksiyonu · en yüksek cirolu 10 ürün</p>
+      <div id="forecastKpi" class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4"></div>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr>
+            <th class="px-3 py-2 text-left">Ürün</th>
+            <th class="px-3 py-2 num">3 Ay Ort. Satış</th>
+            <th class="px-3 py-2 num">Gelecek Ay Tahmini Ciro</th>
+            <th class="px-3 py-2 num">Stok</th>
+            <th class="px-3 py-2 num">Öngörülen Tükenme</th>
+            <th class="px-3 py-2 text-left">Durum</th>
+          </tr></thead>
+          <tbody id="forecastTbody"></tbody>
+        </table>
+      </div>
+      <p class="text-[11px] text-slate-400 mt-3 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">📐 <strong>Hesap:</strong> Hareketli ortalama (HO₃) = son 3 takvim ayının satış adetleri toplamı ÷ 3. Gelecek ay tahmini ciro = HO₃ × son dönem ortalama birim satış fiyatı. Öngörülen tükenme = mevcut stok ÷ HO₃ (ay). Durum eşikleri: 🔴 &lt; 1 ay (hemen sipariş), 🟡 1–2 ay (planla), 🟢 ≥ 2 ay. HO yöntemi ani sıçramaları yumuşatır ama trend kırılımlarını 1-2 ay gecikmeyle yakalar; mevsimsel ürünlerde temkinli yorumlanmalıdır.</p>
     </div>
 
     <!-- Margin Trend -->
@@ -409,13 +457,47 @@
     </div>
 
 
+
+    <!-- Servis SLA -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-4">
+      <h3 class="text-base font-bold text-slate-900 mb-1">⏱️ Servis Süreç Süreleri (SLA)</h3>
+      <p class="text-xs text-slate-500 mb-3" id="slaSubtitle">Cari yıl kayıtlarından, tarih alanı dolu olanlarla hesaplanır</p>
+      <div id="slaCards" class="grid grid-cols-1 sm:grid-cols-3 gap-3"></div>
+      <p class="text-[11px] text-slate-400 mt-3 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">📐 <strong>Hesap:</strong> Her metrik, ilgili iki tarih alanı da dolu olan kayıtların gün farklarının aritmetik ortalamasıdır: Çözüm Süresi = onarım tarihi − geliş tarihi; Teslim Süresi = kargo/teslim tarihi − geliş tarihi; Tahsilat Süresi = ödeme tarihi − onarım tarihi. Parantezdeki n, hesaba giren kayıt sayısıdır — n küçükse ortalama tek bir uç kayıttan etkilenebilir.</p>
+    </div>
     </div>
     <div id="homeSec-risk" class="home-sec hidden">
-    <!-- Currency Risk Table -->
+    <!-- Marj Erozyonu -->
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-4">
-      <h3 class="text-base font-bold text-slate-900 mb-1">⚠ Kur Riski — Maliyeti Şişen Ürünler</h3>
-      <p class="text-xs text-slate-500 mb-3">Alış kuru ile güncel TCMB kuru arasındaki fark %5'in üzerinde olan ürünler. Bu ürünleri yeniden almak için bugün daha fazla TL ödersin.</p>
+      <h3 class="text-base font-bold text-slate-900 mb-1">📉 Kur Kaynaklı Marj Erozyonu</h3>
+      <p class="text-xs text-slate-500 mb-3">Satış fiyatı sabit kalırken kur arttığı için marjı sessizce eriyen ürünler · erozyon puanına göre ilk 10</p>
       <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead><tr>
+            <th class="px-3 py-2 text-left">Ürün</th>
+            <th class="px-3 py-2 num">Alış Kuru Marjı</th>
+            <th class="px-3 py-2 num">Güncel Kur Marjı</th>
+            <th class="px-3 py-2 num">Erozyon (puan)</th>
+            <th class="px-3 py-2 num">Yıllık Kar Etkisi</th>
+          </tr></thead>
+          <tbody id="erosionTbody"></tbody>
+        </table>
+      </div>
+      <p class="text-[11px] text-slate-400 mt-3 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">📐 <strong>Hesap:</strong> Marj = (Satış Fiyatı − Maliyet) ÷ Satış Fiyatı. "Alış kuru marjı" kayıtlı alış kuruyla, "güncel kur marjı" ise maliyetin bugünkü TCMB kuruyla yeniden fiyatlanmış halidir (maliyet × güncel kur ÷ alış kuru — tüm vergi/masraflar çıplak maliyetin yüzdesi olduğundan doğrusal ölçeklenir). Erozyon = iki marj arasındaki fark (yüzde puanı). Yıllık kar etkisi = (güncel maliyet − eski maliyet) × aylık satış tahmini × 12. Yalnızca dövizle alınan ve aktif satış fiyatı olan ürünler listelenir.</p>
+    </div>
+
+    <!-- Currency Risk Table -->
+    <details class="bg-white rounded-xl shadow-sm border border-slate-200 mb-4">
+      <summary class="cursor-pointer select-none p-5 list-none hover:bg-slate-50 rounded-xl transition-colors">
+        <div class="flex items-start gap-2">
+          <span class="text-slate-400 text-xs mt-1">▶</span>
+          <div>
+            <h3 class="text-base font-bold text-slate-900 mb-1">⚠ Kur Riski — Maliyeti Şişen Ürünler <span class="text-xs font-normal text-slate-400">(açmak için tıkla)</span></h3>
+            <p class="text-xs text-slate-500">Alış kuru ile güncel TCMB kuru arasındaki fark %5'in üzerinde olan ürünler. Bu ürünleri yeniden almak için bugün daha fazla TL ödersin.</p>
+          </div>
+        </div>
+      </summary>
+      <div class="overflow-x-auto px-5 pb-5">
         <table class="w-full text-sm">
           <thead>
             <tr>
@@ -431,8 +513,9 @@
           </thead>
           <tbody id="riskTbody"></tbody>
         </table>
+      <p class="text-[11px] text-slate-400 mt-3 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">📐 <strong>Hesap:</strong> Risk % = (Güncel Kur − Alış Kuru) ÷ Alış Kuru. Bugünkü maliyet, çıplak maliyetin güncel kurla yeniden fiyatlanmasıyla bulunur; tüm vergi ve masraflar çıplak maliyetin yüzdesi olduğundan toplam maliyet kurla doğru orantılı ölçeklenir. Etki = (Bugünkü − Eski Maliyet) × Stok Adedi.</p>
       </div>
-    </div>
+    </details>
 
 
     </div>
@@ -2354,11 +2437,11 @@ function showHomeSection(sec) {
   // Grafikler gizli container'da doğru boyutlanamaz → bölüm görünür olduktan sonra yeniden çiz
   setTimeout(() => {
     if (sec === 'overview')   { renderHome(); runHomeRateSimulation(); }
-    if (sec === 'product')    { renderAnalytics(); renderAbcAnalysis(); }
-    if (sec === 'sales')      { renderCompanyComparison(); renderAnalytics(); }
+    if (sec === 'product')    { renderAnalytics(); renderAbcAnalysis(); renderStockAging(); }
+    if (sec === 'sales')      { renderCompanyComparison(); renderAnalytics(); renderHomeSalesCharts(); renderSalesForecast(); }
     if (sec === 'purchasing') { renderPurchaseAnalytics(); }
-    if (sec === 'service')    { renderServiceAnalyticsSummary(); }
-    if (sec === 'risk')       { renderAnalytics(); }
+    if (sec === 'service')    { renderServiceAnalyticsSummary(); renderServiceSLA(); }
+    if (sec === 'risk')       { renderAnalytics(); renderMarginErosion(); }
   }, 50);
 }
 
@@ -2622,6 +2705,11 @@ function renderAll() {
   renderAbcAnalysis();
   renderServiceAnalyticsSummary();
   renderCompanyComparison();
+  renderHomeSalesCharts();
+  renderSalesForecast();
+  renderStockAging();
+  renderServiceSLA();
+  renderMarginErosion();
   renderSalesTab();
   renderServiceTab();
   renderExpPricesTab();
@@ -3620,6 +3708,256 @@ function renderCompanyComparison() {
       },
     },
   });
+}
+
+// ============================================================
+// GELİŞMİŞ ANALİZ MODÜLÜ: Satış Grafikleri · Tahmin · Yaşlandırma · SLA · Erozyon
+// ============================================================
+
+function renderHomeSalesCharts() {
+  if (typeof Chart === 'undefined') return;
+  const year = new Date().getFullYear();
+  const yearSales = (state.sales || []).filter(s => s.year === year && !s.no_stock);
+  const prodMap = {};
+  state.products.forEach(p => { prodMap[p.id] = p; });
+
+  // Kategori bazlı ciro
+  const pieCanvas = document.getElementById('chartHSalesByGroup');
+  if (pieCanvas) {
+    const byGroup = {};
+    yearSales.forEach(s => {
+      const p = prodMap[s.productId];
+      const gid = p ? p.group : '_other';
+      byGroup[gid] = (byGroup[gid] || 0) + (s.revenue || 0);
+    });
+    const entries = Object.entries(byGroup).filter(([,v]) => v > 0).sort((a,b) => b[1]-a[1]);
+    const palette = ['#0ea5e9','#8b5cf6','#f59e0b','#059669','#dc2626','#0891b2','#c026d3','#65a30d'];
+    destroyChart('hSalesByGroup');
+    charts.hSalesByGroup = new Chart(pieCanvas, {
+      type: 'doughnut',
+      data: {
+        labels: entries.map(([gid]) => gid === '_other' ? 'Diğer' : getCategoryById(gid).name),
+        datasets: [{ data: entries.map(([,v]) => v), backgroundColor: entries.map((_, i) => palette[i % palette.length] + 'cc'), borderWidth: 2, borderColor: '#fff' }],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false, cutout: '55%',
+        plugins: {
+          legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 10 } } },
+          tooltip: { callbacks: { label: (ctx) => {
+            const total = entries.reduce((s, [,v]) => s + v, 0);
+            return `${ctx.label}: ${fmtTL(ctx.parsed)} (%${total > 0 ? (ctx.parsed/total*100).toFixed(1) : 0})`;
+          } } },
+        },
+      },
+    });
+  }
+
+  // En çok satan 10 ürün (ciro)
+  const topCanvas = document.getElementById('chartHSalesTop');
+  if (topCanvas) {
+    const byProd = {};
+    yearSales.forEach(s => { byProd[s.productId] = (byProd[s.productId] || 0) + (s.revenue || 0); });
+    const top = Object.entries(byProd).sort((a,b) => b[1]-a[1]).slice(0, 10);
+    destroyChart('hSalesTop');
+    charts.hSalesTop = new Chart(topCanvas, {
+      type: 'bar',
+      data: {
+        labels: top.map(([pid]) => { const n = prodMap[pid]?.name || pid; return n.length > 22 ? n.slice(0,20)+'…' : n; }),
+        datasets: [{ label: 'Ciro (₺)', data: top.map(([,v]) => v), backgroundColor: 'rgba(14, 165, 233, 0.8)', borderRadius: 4 }],
+      },
+      options: {
+        indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => fmtTL(ctx.parsed.x) } } },
+        scales: {
+          x: { ticks: { callback: (v) => new Intl.NumberFormat('tr-TR', { notation: 'compact' }).format(v) + ' ₺', font: { size: 10 } } },
+          y: { ticks: { font: { size: 10 } } },
+        },
+      },
+    });
+  }
+}
+
+function renderSalesForecast() {
+  const kpiEl = document.getElementById('forecastKpi');
+  const tbody = document.getElementById('forecastTbody');
+  if (!kpiEl || !tbody) return;
+
+  // Son 3 takvim ayının anahtarları
+  const now = new Date();
+  const keys = [];
+  for (let i = 1; i <= 3; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    keys.push(d.getFullYear() + '-' + (d.getMonth() + 1));
+  }
+  const inWindow = (s) => keys.includes(s.year + '-' + s.month);
+
+  // Ürün bazında 3 aylık adet ve ciro
+  const qty3 = {}, rev3 = {};
+  (state.sales || []).forEach(s => {
+    if (!inWindow(s) || s.no_stock) return;
+    qty3[s.productId] = (qty3[s.productId] || 0) + (s.qty || 0);
+    rev3[s.productId] = (rev3[s.productId] || 0) + (s.revenue || 0);
+  });
+
+  const rows = state.products.map(p => {
+    const q3 = qty3[p.id] || 0;
+    const ma = q3 / 3; // hareketli ortalama (ad/ay)
+    const avgPrice = q3 > 0 ? (rev3[p.id] || 0) / q3 : 0;
+    const stock = p.stock_qty || 0;
+    const depletion = ma > 0 ? stock / ma : null; // ay
+    return { p, ma, forecastRev: ma * avgPrice, stock, depletion, rev3: rev3[p.id] || 0 };
+  }).filter(r => r.ma > 0).sort((a, b) => b.rev3 - a.rev3);
+
+  const totalForecast = rows.reduce((s, r) => s + r.forecastRev, 0);
+  const critical = rows.filter(r => r.depletion != null && r.depletion < 1).length;
+  const warning = rows.filter(r => r.depletion != null && r.depletion >= 1 && r.depletion < 2).length;
+
+  const kpi = (label, value, sub, color = 'text-slate-900') => `
+    <div class="border border-slate-200 rounded-lg p-3 text-center">
+      <div class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">${label}</div>
+      <div class="text-base font-bold ${color} num">${value}</div>
+      <div class="text-[11px] text-slate-500 mt-0.5">${sub || ''}</div>
+    </div>`;
+  kpiEl.innerHTML =
+    kpi('Gelecek Ay Ciro Tahmini', fmtTL(totalForecast), 'Hareketli ortalama bazlı') +
+    kpi('🔴 Kritik Stok', critical + ' ürün', 'Tahmini 1 aydan önce tükenir', critical ? 'text-red-600' : 'text-emerald-700') +
+    kpi('🟡 Yaklaşan', warning + ' ürün', '1–2 ay içinde tükenir', warning ? 'text-amber-600' : 'text-slate-900');
+
+  tbody.innerHTML = rows.length
+    ? rows.slice(0, 10).map(r => {
+        const status = r.depletion == null ? '—'
+          : r.depletion < 1 ? '<span class="text-red-600 font-semibold">🔴 Hemen sipariş</span>'
+          : r.depletion < 2 ? '<span class="text-amber-600 font-semibold">🟡 Sipariş planla</span>'
+          : '<span class="text-emerald-700">🟢 Yeterli</span>';
+        return `<tr class="ok-row">
+          <td class="px-3 py-2 font-medium text-slate-900">${escapeHtml(r.p.name)}</td>
+          <td class="px-3 py-2 num">${r.ma.toFixed(1)} ad/ay</td>
+          <td class="px-3 py-2 num">${fmtTL(r.forecastRev)}</td>
+          <td class="px-3 py-2 num">${r.stock.toLocaleString('tr-TR')} ad</td>
+          <td class="px-3 py-2 num">${r.depletion == null ? '—' : r.depletion.toFixed(1) + ' ay'}</td>
+          <td class="px-3 py-2 text-xs">${status}</td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="6" class="px-3 py-6 text-center text-slate-400 text-sm">Son 3 ayda satış kaydı bulunmadığından tahmin üretilemedi.</td></tr>';
+}
+
+function renderStockAging() {
+  const cardsEl = document.getElementById('agingCards');
+  if (!cardsEl) return;
+
+  // Ürün başına son satış dönemi
+  const lastSale = {};
+  (state.sales || []).forEach(s => {
+    const key = s.year * 12 + (s.month - 1);
+    if (lastSale[s.productId] == null || key > lastSale[s.productId]) lastSale[s.productId] = key;
+  });
+  const nowKey = new Date().getFullYear() * 12 + new Date().getMonth();
+
+  const bands = [
+    { label: '0–3 ay', min: 0, max: 3, color: '#059669', count: 0, capital: 0 },
+    { label: '3–6 ay', min: 3, max: 6, color: '#84cc16', count: 0, capital: 0 },
+    { label: '6–12 ay', min: 6, max: 12, color: '#f59e0b', count: 0, capital: 0 },
+    { label: '12+ ay', min: 12, max: Infinity, color: '#dc2626', count: 0, capital: 0 },
+    { label: 'Hiç satılmadı', min: null, max: null, color: '#64748b', count: 0, capital: 0 },
+  ];
+  state.products.forEach(p => {
+    if ((p.stock_qty || 0) <= 0) return;
+    const capital = calculate(p).stock_value_tl;
+    const lk = lastSale[p.id];
+    let band;
+    if (lk == null) band = bands[4];
+    else {
+      const months = nowKey - lk;
+      band = bands.find(b => b.min != null && months >= b.min && months < b.max) || bands[3];
+    }
+    band.count++; band.capital += capital;
+  });
+
+  cardsEl.innerHTML = bands.map(b => `
+    <div class="flex items-center gap-3 border border-slate-200 rounded-lg px-3 py-2">
+      <span class="w-2.5 h-2.5 rounded-full flex-shrink-0" style="background:${b.color}"></span>
+      <span class="text-sm font-medium text-slate-700 w-28">${b.label}</span>
+      <span class="text-xs text-slate-500">${b.count} ürün</span>
+      <span class="ml-auto text-sm font-semibold num text-slate-900">${fmtTL(b.capital)}</span>
+    </div>`).join('');
+
+  if (typeof Chart === 'undefined') return;
+  const canvas = document.getElementById('chartStockAging');
+  if (!canvas) return;
+  destroyChart('stockAging');
+  charts.stockAging = new Chart(canvas, {
+    type: 'bar',
+    data: {
+      labels: bands.map(b => b.label),
+      datasets: [{ label: 'Bağlı Sermaye (₺)', data: bands.map(b => b.capital), backgroundColor: bands.map(b => b.color + 'cc'), borderRadius: 4 }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (ctx) => `${fmtTL(ctx.parsed.y)} · ${bands[ctx.dataIndex].count} ürün` } } },
+      scales: {
+        y: { ticks: { callback: (v) => new Intl.NumberFormat('tr-TR', { notation: 'compact' }).format(v) + ' ₺', font: { size: 10 } } },
+        x: { ticks: { font: { size: 10 } } },
+      },
+    },
+  });
+}
+
+function renderServiceSLA() {
+  const cardsEl = document.getElementById('slaCards');
+  if (!cardsEl) return;
+  const year = new Date().getFullYear();
+  const records = (state.service || []).filter(s => (s.date_arrival || '').startsWith(String(year)));
+  const sub = document.getElementById('slaSubtitle');
+  if (sub) sub.textContent = `${year} kayıtlarından, ilgili tarih alanları dolu olanlarla hesaplanır`;
+
+  const dayDiff = (a, b) => {
+    if (!a || !b) return null;
+    const d = (new Date(b) - new Date(a)) / 86400000;
+    return isNaN(d) || d < 0 ? null : d;
+  };
+  const avgOf = (pairs) => {
+    const vals = records.map(s => dayDiff(s[pairs[0]], s[pairs[1]])).filter(v => v != null);
+    return { avg: vals.length ? vals.reduce((a,b) => a+b, 0) / vals.length : null, n: vals.length };
+  };
+  const resolve = avgOf(['date_arrival', 'date_resolved']);
+  const ship    = avgOf(['date_arrival', 'date_shipped']);
+  const pay     = avgOf(['date_resolved', 'date_paid']);
+
+  const card = (icon, label, r, hint) => `
+    <div class="border border-slate-200 rounded-lg p-4 text-center">
+      <div class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">${icon} ${label}</div>
+      <div class="text-2xl font-bold text-slate-900 num">${r.avg == null ? '—' : r.avg.toFixed(1) + ' gün'}</div>
+      <div class="text-[11px] text-slate-500 mt-0.5">${r.avg == null ? 'Yeterli tarihli kayıt yok' : `${hint} (n=${r.n})`}</div>
+    </div>`;
+  cardsEl.innerHTML =
+    card('🔧', 'Ort. Çözüm Süresi', resolve, 'Geliş → onarım') +
+    card('📦', 'Ort. Teslim Süresi', ship, 'Geliş → kargo/teslim') +
+    card('💳', 'Ort. Tahsilat Süresi', pay, 'Onarım → ödeme');
+}
+
+function renderMarginErosion() {
+  const tbody = document.getElementById('erosionTbody');
+  if (!tbody) return;
+  const rows = state.products.map(p => {
+    const c = calculate(p);
+    if (c.active_price_tl <= 0 || p.purchase_currency === 'TL' || !(c.used_rate > 0)) return null;
+    const curCost = c.total_cost * c.current_rate_for_currency / c.used_rate;
+    const mOld = (c.active_price_tl - c.total_cost) / c.active_price_tl;
+    const mNew = (c.active_price_tl - curCost) / c.active_price_tl;
+    const erosion = mOld - mNew; // yüzde puanı (oran)
+    const annualImpact = (curCost - c.total_cost) * (c.monthly_sales || 0) * 12;
+    return { p, mOld, mNew, erosion, annualImpact };
+  }).filter(r => r && r.erosion > 0.001).sort((a, b) => b.erosion - a.erosion).slice(0, 10);
+
+  tbody.innerHTML = rows.length
+    ? rows.map(r => `<tr class="ok-row">
+        <td class="px-3 py-2 font-medium text-slate-900">${escapeHtml(r.p.name)}</td>
+        <td class="px-3 py-2 num">${fmtPct(r.mOld)}</td>
+        <td class="px-3 py-2 num ${r.mNew < 0.3 ? 'text-red-600 font-semibold' : 'text-amber-700'}">${fmtPct(r.mNew)}</td>
+        <td class="px-3 py-2 num font-semibold text-red-600">−${(r.erosion * 100).toFixed(1)} puan</td>
+        <td class="px-3 py-2 num">${r.annualImpact > 0 ? '−' + fmtTL(r.annualImpact) : '—'}</td>
+      </tr>`).join('')
+    : '<tr><td colspan="5" class="px-3 py-6 text-center text-slate-400 text-sm">Kur kaynaklı marj erozyonu tespit edilmedi. ✓</td></tr>';
 }
 
 function init() {
