@@ -44,6 +44,49 @@
     background: white; border-radius: 1rem; padding: 1.5rem;
     width: 100%; box-shadow: 0 20px 60px rgba(0,0,0,0.3);
   }
+
+/* ---- Not tooltip'i: hover'da okunabilir boyutta açılır ---- */
+.note-tip { position: relative; cursor: help; }
+.note-tip .note-pop {
+  display: none; position: absolute; bottom: calc(100% + 6px); left: 0; z-index: 60;
+  width: 280px; max-width: 70vw; white-space: normal; word-break: break-word;
+  background: #1e293b; color: #f1f5f9; font-size: 12.5px; line-height: 1.5;
+  padding: 10px 12px; border-radius: 10px; box-shadow: 0 8px 24px rgba(15,23,42,.25);
+  animation: tipIn .15s ease both;
+}
+.note-tip .note-pop::after {
+  content: ''; position: absolute; top: 100%; left: 18px;
+  border: 6px solid transparent; border-top-color: #1e293b;
+}
+.note-tip:hover .note-pop { display: block; }
+@keyframes tipIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+/* ---- Ana ekran animasyonları ---- */
+@keyframes fadeInUp { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+.home-sec { animation: fadeInUp .35s ease both; }
+#homeStatCards > div, #homeAlerts > div { animation: fadeInUp .45s ease both; }
+#homeStatCards > div:nth-child(1) { animation-delay: .00s; }
+#homeStatCards > div:nth-child(2) { animation-delay: .06s; }
+#homeStatCards > div:nth-child(3) { animation-delay: .12s; }
+#homeStatCards > div:nth-child(4) { animation-delay: .18s; }
+#homeStatCards > div:nth-child(5) { animation-delay: .24s; }
+#homeStatCards > div:nth-child(6) { animation-delay: .30s; }
+#homeAlerts > div:nth-child(-n+8) { animation-delay: calc(.05s * var(--i, 0)); }
+#homeStatCards > div {
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+#homeStatCards > div:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px -8px rgba(15, 23, 42, .18);
+}
+#homeQuickNav button { transition: transform .18s ease, box-shadow .18s ease, border-color .18s ease; }
+#homeQuickNav button:hover { transform: translateY(-3px); }
+.home-sec-btn { transition: transform .15s ease, background-color .2s ease, color .2s ease; }
+.home-sec-btn:active { transform: scale(.96); }
+@media (prefers-reduced-motion: reduce) {
+  .home-sec, #homeStatCards > div, #homeAlerts > div, .note-tip .note-pop { animation: none !important; }
+  #homeStatCards > div, #homeQuickNav button { transition: none !important; }
+}
 </style>
 </head>
 <body class="bg-slate-100 min-h-screen">
@@ -112,6 +155,7 @@
     <button data-tab="purchasing" class="tab-btn pill-btn tab-inactive">🛒 Satın Alma</button>
     <button data-tab="sales" class="tab-btn pill-btn tab-inactive">💰 Satış Takibi</button>
     <button data-tab="service" class="tab-btn pill-btn tab-inactive">🔧 Teknik Servis</button>
+    <button data-tab="expenses" class="tab-btn pill-btn tab-inactive">💸 Giderler</button>
     <button data-tab="categories" class="tab-btn pill-btn tab-inactive">🗂️ Kategoriler & Vergiler</button>
     <button data-tab="settings" class="tab-btn pill-btn tab-inactive">⚙️ Ayarlar</button>
     <button data-tab="history" class="tab-btn pill-btn tab-inactive">📚 Fiyat Geçmişi</button>
@@ -360,6 +404,22 @@
       <p class="text-[11px] text-slate-400 mt-3 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">📐 <strong>Hesap:</strong> Hareketli ortalama (HO₃) = son 3 takvim ayının satış adetleri toplamı ÷ 3. Gelecek ay tahmini ciro = HO₃ × son dönem ortalama birim satış fiyatı. Öngörülen tükenme = mevcut stok ÷ HO₃ (ay). Durum eşikleri: 🔴 &lt; 1 ay (hemen sipariş), 🟡 1–2 ay (planla), 🟢 ≥ 2 ay. HO yöntemi ani sıçramaları yumuşatır ama trend kırılımlarını 1-2 ay gecikmeyle yakalar; mevsimsel ürünlerde temkinli yorumlanmalıdır.</p>
     </div>
 
+    <!-- Brüt Kar Köprüsü -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-4">
+      <div class="flex items-center justify-between flex-wrap gap-2 mb-1">
+        <h3 class="text-base font-bold text-slate-900">🌉 Brüt Kar Köprüsü (Fiyat–Hacim–Mix)</h3>
+        <div class="flex items-center gap-2 text-sm">
+          <select id="bridgeY0" class="px-2 py-1 border border-slate-200 rounded-lg text-sm"></select>
+          <span class="text-slate-400">→</span>
+          <select id="bridgeY1" class="px-2 py-1 border border-slate-200 rounded-lg text-sm"></select>
+        </div>
+      </div>
+      <p class="text-xs text-slate-500 mb-3">İki yıl arasındaki brüt kar değişimi hangi etkenlerden geldi? 2024–2025 satış verilerini girdikçe bu köprü kendiliğinden dolar.</p>
+      <div id="bridgeEmpty" class="hidden text-sm text-slate-400 text-center py-8">Karşılaştırma için her iki yılda da satış kaydı gerekli.</div>
+      <div style="height: 300px;"><canvas id="chartBridge"></canvas></div>
+      <p class="text-[11px] text-slate-400 mt-3 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">📐 <strong>Hesap:</strong> Brüt Kar (GP) = Σ ciro − (adet × birim maliyet). Değişim ayrıştırması, her iki yılda da satılan ürünler için: <em>Hacim Etkisi</em> = (Q₁−Q₀) × (P₀−C); <em>Fiyat Etkisi</em> = Q₁ × (P₁−P₀); yalnızca yeni yılda satılanlar <em>Yeni Ürünler</em>, yalnızca eski yılda satılanlar <em>Çıkan Ürünler</em> etkisine yazılır (P = ciro÷adet). Önemli sınırlama: geçmiş yılların birim maliyeti kaydedilmediğinden her iki yıl için <em>bugünkü</em> birim maliyet kullanılır — bu yüzden köprü maliyet/kur etkisini ayrıştıramaz; o etki Marj Erozyonu analizinde ayrıca izlenir.</p>
+    </div>
+
     <!-- Margin Trend -->
     <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-4">
       <h3 class="text-base font-bold text-slate-900 mb-1">📈 Marj & Fiyat Trendi</h3>
@@ -518,6 +578,85 @@
     </details>
 
 
+    </div>
+  </section>
+
+  <!-- ===== GİDERLER SEKMESİ ===== -->
+  <section id="tab-expenses" class="tab-content hidden">
+    <div id="expKpiCards" class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4"></div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 mb-4">
+      <h3 class="text-base font-bold text-slate-900 mb-1">📊 Aylık Gelir – Gider – Net</h3>
+      <p class="text-xs text-slate-500 mb-3" id="expChartSubtitle">Gelir: satış cirosu (grup konsolide) · Gider: bu modüle girilen kayıtlar</p>
+      <div style="height: 280px;"><canvas id="chartExpMonthly"></canvas></div>
+      <p class="text-[11px] text-slate-400 mt-3 bg-slate-50 border border-slate-100 rounded-lg px-3 py-2">📐 <strong>Hesap:</strong> Net = Aylık Gelir − Aylık Gider. Büyüme oranı (YoY) = (Bu yıl gelir − Geçen yıl gelir) ÷ Geçen yıl gelir × 100. Buradaki "net", gider kayıtlarının kapsamına bağlıdır: ürün alış maliyetlerini gider olarak girmezsen net ≈ brüt kar − işletme giderleri (yaklaşık faaliyet karı, EBITDA benzeri); girersen nakit bazlı net akışa yaklaşır. Tutarlılık için tek bir yöntem seçip ona sadık kal.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4">
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="font-bold text-slate-900 mb-4">➕ Gider Girişi</h3>
+        <div class="space-y-3">
+          <div>
+            <label class="text-xs font-medium text-slate-600">Firma</label>
+            <select id="e_company" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+              <option value="kozmetik">Azra Grup Kozmetik</option>
+              <option value="makine">Azra Grup Makine</option>
+              <option value="azra1">Azra1</option>
+              <option value="grup">Grup Ortak Gideri</option>
+            </select>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-xs font-medium text-slate-600">Kategori</label>
+              <select id="e_category" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"></select>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600">Tür</label>
+              <select id="e_type" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+                <option value="fixed">Sabit</option>
+                <option value="variable">Değişken</option>
+              </select>
+            </div>
+          </div>
+          <div class="grid grid-cols-2 gap-2">
+            <div>
+              <label class="text-xs font-medium text-slate-600">Ay</label>
+              <select id="e_month" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm"></select>
+            </div>
+            <div>
+              <label class="text-xs font-medium text-slate-600">Yıl</label>
+              <input type="number" id="e_year" min="2020" max="2030" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+            </div>
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600">Tutar (₺)</label>
+            <input type="number" id="e_amount" min="0" step="0.01" placeholder="0,00" class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm num">
+          </div>
+          <div>
+            <label class="text-xs font-medium text-slate-600">Not</label>
+            <input type="text" id="e_note" placeholder="Opsiyonel açıklama..." class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm">
+          </div>
+          <button onclick="saveExpense()" class="w-full py-2 bg-slate-900 text-white rounded-lg text-sm font-semibold hover:bg-slate-700 transition-colors">Kaydet</button>
+        </div>
+      </div>
+
+      <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-slate-200 p-5">
+        <h3 class="font-bold text-slate-900 mb-3">🧾 Gider Kayıtları <span class="text-xs font-normal text-slate-400" id="expCount"></span></h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead><tr>
+              <th class="px-3 py-2 text-left">Dönem</th>
+              <th class="px-3 py-2 text-left">Firma</th>
+              <th class="px-3 py-2 text-left">Kategori</th>
+              <th class="px-3 py-2 text-left">Tür</th>
+              <th class="px-3 py-2 num">Tutar</th>
+              <th class="px-3 py-2 text-left">Not</th>
+              <th class="px-3 py-2"></th>
+            </tr></thead>
+            <tbody id="expTbody"></tbody>
+          </table>
+        </div>
+      </div>
     </div>
   </section>
 
@@ -946,7 +1085,11 @@
             <textarea id="s_note" rows="2" placeholder="Bu satış kaydına dair not (opsiyonel)..." class="mt-1 w-full px-3 py-2 border border-slate-200 rounded-lg text-sm resize-none"></textarea>
           </div>
           <div id="s_cost_info" class="hidden bg-slate-50 rounded-lg p-3 text-xs text-slate-600 space-y-1"></div>
-          <button onclick="saveSalesEntry()" class="w-full py-2 bg-slate-900 text-white rounded-lg text-sm font-semibold hover:bg-slate-700 transition-colors">Kaydet</button>
+          <div id="saleEditBanner" class="hidden bg-amber-50 border border-amber-200 rounded-lg px-3 py-2 text-xs text-amber-800 flex items-center justify-between">
+            <span>✏️ Mevcut kaydı düzenliyorsun</span>
+            <button onclick="cancelSaleEdit()" class="text-amber-700 hover:text-amber-900 font-semibold">✖ Vazgeç</button>
+          </div>
+          <button id="saveSaleBtn" onclick="saveSalesEntry()" class="w-full py-2 bg-slate-900 text-white rounded-lg text-sm font-semibold hover:bg-slate-700 transition-colors">Kaydet</button>
         </div>
       </div>
 
@@ -1901,6 +2044,8 @@ let state = {
   filter: { search: '', group: '', warning: 'all' },
   currentTab: 'home',
   editingProductIndex: null,
+  editingSaleId: null,
+  expenses: [],
   editingCategoryIndex: null,
 };
 
@@ -1936,6 +2081,7 @@ const ENTITY_TABLES = {
   spare_parts:      { table: 'spare_parts',       idOf: r => r.id },
   suppliers:        { table: 'suppliers',        idOf: r => r.id },
   purchase_orders:  { table: 'purchase_orders',  idOf: r => r.id },
+  expenses:         { table: 'expenses',         idOf: r => r.id },
 };
 
 // Bir dizi state alanını, ilgili Supabase tablosuyla tam eşleştirir
@@ -2013,6 +2159,7 @@ async function persist() {
     syncEntityTable('spare_parts'),
     syncEntityTable('suppliers'),
     syncEntityTable('purchase_orders'),
+    syncEntityTable('expenses'),
     syncExportPrices(),
     syncPartCategories(),
     syncSettings(),
@@ -2021,7 +2168,7 @@ async function persist() {
 
 async function loadFromSupabase() {
   try {
-    const [prodRes, catRes, setRes, histRes, salesRes, svcRes, epRes, partsRes, partCatRes, supRes, poRes] = await Promise.all([
+    const [prodRes, catRes, setRes, histRes, salesRes, svcRes, epRes, partsRes, partCatRes, supRes, poRes, expRes] = await Promise.all([
       sb.from('products').select('data'),
       sb.from('categories').select('data'),
       sb.from('app_settings').select('data').eq('id', 'default').maybeSingle(),
@@ -2033,6 +2180,7 @@ async function loadFromSupabase() {
       sb.from('part_categories').select('data'),
       sb.from('suppliers').select('data'),
       sb.from('purchase_orders').select('data'),
+      sb.from('expenses').select('data'),
     ]);
 
     const anyRows = (prodRes.data?.length || catRes.data?.length || setRes.data || salesRes.data?.length ||
@@ -2052,6 +2200,7 @@ async function loadFromSupabase() {
     state.part_categories = (partCatRes.data || []).map(r => r.data?.name).filter(Boolean);
     state.suppliers = (supRes.data || []).map(r => r.data);
     state.purchase_orders = (poRes.data || []).map(r => r.data);
+    state.expenses = (expRes && expRes.data ? expRes.data : []).map(r => r.data);
   } catch(e) { console.error('loadFromSupabase hatası:', e); loadSeed(); }
 }
 
@@ -2438,7 +2587,7 @@ function showHomeSection(sec) {
   setTimeout(() => {
     if (sec === 'overview')   { renderHome(); runHomeRateSimulation(); }
     if (sec === 'product')    { renderAnalytics(); renderAbcAnalysis(); renderStockAging(); }
-    if (sec === 'sales')      { renderCompanyComparison(); renderAnalytics(); renderHomeSalesCharts(); renderSalesForecast(); }
+    if (sec === 'sales')      { renderCompanyComparison(); renderAnalytics(); renderHomeSalesCharts(); renderSalesForecast(); renderGrossProfitBridge(); }
     if (sec === 'purchasing') { renderPurchaseAnalytics(); }
     if (sec === 'service')    { renderServiceAnalyticsSummary(); renderServiceSLA(); }
     if (sec === 'risk')       { renderAnalytics(); renderMarginErosion(); }
@@ -2710,12 +2859,15 @@ function renderAll() {
   renderStockAging();
   renderServiceSLA();
   renderMarginErosion();
+  renderGrossProfitBridge();
+  renderExpensesTab();
   renderSalesTab();
   renderServiceTab();
   renderExpPricesTab();
 }
 
 const TAB_NAV_META = {
+  expenses:   { icon: '💸', label: 'Giderler',                desc: 'Gelir-gider dengesi ve büyüme' },
   products:   { icon: '📦', label: 'Ürünler',                desc: 'Ürün listesi, maliyet ve fiyatlar' },
   purchasing: { icon: '🛒', label: 'Satın Alma',              desc: 'Sipariş, tedarikçi ve teslimat takibi' },
   sales:      { icon: '💰', label: 'Satış Takibi',            desc: 'Aylık satış girişi ve raporlar' },
@@ -3960,6 +4112,218 @@ function renderMarginErosion() {
     : '<tr><td colspan="5" class="px-3 py-6 text-center text-slate-400 text-sm">Kur kaynaklı marj erozyonu tespit edilmedi. ✓</td></tr>';
 }
 
+// ============================================================
+// FİNANSAL MODÜL: Brüt Kar Köprüsü · Gider Takibi
+// ============================================================
+
+const EXPENSE_CATEGORIES = [
+  { id: 'personel',  name: '👥 Personel (maaş+SGK)', type: 'fixed' },
+  { id: 'kira',      name: '🏢 Kira', type: 'fixed' },
+  { id: 'enerji',    name: '⚡ Enerji (elektrik/su/gaz)', type: 'fixed' },
+  { id: 'iletisim',  name: '📱 İletişim & Yazılım', type: 'fixed' },
+  { id: 'yemek',     name: '🍽️ Yemek', type: 'fixed' },
+  { id: 'kargo',     name: '🚚 Kargo & Lojistik', type: 'variable' },
+  { id: 'gumruk',    name: '🛃 Gümrük & İthalat Masrafı', type: 'variable' },
+  { id: 'banka',     name: '🏦 Banka / Finansman / Kredi Kartı', type: 'variable' },
+  { id: 'pazarlama', name: '📣 Pazarlama & Reklam', type: 'variable' },
+  { id: 'bakim',     name: '🔧 Bakım & Onarım', type: 'variable' },
+  { id: 'vergi',     name: '🏛️ Vergi & Resmi Ödemeler', type: 'fixed' },
+  { id: 'diger',     name: '📦 Diğer', type: 'variable' },
+];
+const getExpCat = (id) => EXPENSE_CATEGORIES.find(c => c.id === id) || EXPENSE_CATEGORIES[EXPENSE_CATEGORIES.length - 1];
+
+function renderExpensesTab() {
+  const catSel = document.getElementById('e_category');
+  if (!catSel) return;
+  if (!catSel.options.length) {
+    catSel.innerHTML = EXPENSE_CATEGORIES.map(c => `<option value="${c.id}">${c.name}</option>`).join('');
+    catSel.onchange = () => { document.getElementById('e_type').value = getExpCat(catSel.value).type; };
+    const mSel = document.getElementById('e_month');
+    mSel.innerHTML = MONTHS.map((mo, i) => `<option value="${i+1}">${mo}</option>`).join('');
+    const now = new Date();
+    mSel.value = now.getMonth() + 1;
+    document.getElementById('e_year').value = now.getFullYear();
+  }
+
+  const year = new Date().getFullYear();
+  const yearExp = (state.expenses || []).filter(e => e.year === year);
+  const revOf = (y) => (state.sales || []).filter(s => s.year === y).reduce((s, x) => s + (x.revenue || 0), 0);
+  const rev = revOf(year), prevRev = revOf(year - 1);
+  const exp = yearExp.reduce((s, e) => s + (e.amount || 0), 0);
+  const net = rev - exp;
+  const growth = prevRev > 0 ? (rev - prevRev) / prevRev : null;
+
+  const kpi = (label, value, sub, color = 'text-slate-900') => `
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
+      <div class="text-[10px] text-slate-500 uppercase tracking-wider mb-1">${label}</div>
+      <div class="text-xl font-bold ${color} num">${value}</div>
+      <div class="text-xs text-slate-500 mt-0.5">${sub || ''}</div>
+    </div>`;
+  document.getElementById('expKpiCards').innerHTML =
+    kpi(`📈 ${year} Gelir`, fmtTL(rev), 'Satış cirosu, grup konsolide') +
+    kpi(`💸 ${year} Gider`, fmtTL(exp), yearExp.length + ' kayıt') +
+    kpi('💵 Net', fmtTL(net), rev > 0 ? 'Gelirin %' + (net / rev * 100).toFixed(1) + "'i" : '', net >= 0 ? 'text-emerald-700' : 'text-red-600') +
+    kpi('🚀 Büyüme (YoY)', growth == null ? '—' : (growth >= 0 ? '+' : '') + (growth * 100).toFixed(1) + '%', growth == null ? (year-1) + ' verisi girildiğinde hesaplanır' : (year-1) + ' gelirine göre', growth == null ? 'text-slate-400' : growth >= 0 ? 'text-emerald-700' : 'text-red-600');
+
+  if (typeof Chart !== 'undefined') {
+    const mRev = Array(12).fill(0), mExp = Array(12).fill(0);
+    (state.sales || []).forEach(s => { if (s.year === year) { const i = (s.month||1)-1; if (i>=0&&i<12) mRev[i] += (s.revenue||0); } });
+    yearExp.forEach(e => { const i = (e.month||1)-1; if (i>=0&&i<12) mExp[i] += (e.amount||0); });
+    destroyChart('expMonthly');
+    charts.expMonthly = new Chart(document.getElementById('chartExpMonthly'), {
+      data: {
+        labels: MONTHS.map(mo => mo.slice(0,3)),
+        datasets: [
+          { type: 'bar', label: 'Gelir (₺)', data: mRev, backgroundColor: 'rgba(5,150,105,.75)', borderRadius: 4, order: 2 },
+          { type: 'bar', label: 'Gider (₺)', data: mExp, backgroundColor: 'rgba(220,38,38,.7)', borderRadius: 4, order: 2 },
+          { type: 'line', label: 'Net (₺)', data: mRev.map((v,i) => v - mExp[i]), borderColor: '#1e293b', backgroundColor: '#1e293b', tension: .3, pointRadius: 3, order: 1 },
+        ],
+      },
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 11 } } },
+          tooltip: { callbacks: { label: (ctx) => ctx.dataset.label + ': ' + fmtTL(ctx.parsed.y) } } },
+        scales: { y: { ticks: { callback: (v) => new Intl.NumberFormat('tr-TR',{notation:'compact'}).format(v)+' ₺', font: { size: 10 } } } },
+      },
+    });
+  }
+
+  const rows = [...(state.expenses || [])].sort((a,b) => (b.year*100+b.month) - (a.year*100+a.month));
+  document.getElementById('expCount').textContent = rows.length ? `(${rows.length} kayıt)` : '';
+  document.getElementById('expTbody').innerHTML = rows.length
+    ? rows.slice(0, 30).map(e => {
+        const comp = e.company === 'grup' ? { short: 'Grup', color: '#64748b' } : getCompanyById(e.company);
+        return `<tr class="border-t border-slate-100 hover:bg-slate-50">
+          <td class="px-3 py-2 text-slate-600">${MONTHS[(e.month||1)-1]} ${e.year}</td>
+          <td class="px-3 py-2"><span class="text-[10px] px-1.5 py-0.5 rounded font-medium" style="background:${comp.color}1a;color:${comp.color}">${comp.short}</span></td>
+          <td class="px-3 py-2">${getExpCat(e.category).name}</td>
+          <td class="px-3 py-2 text-xs">${e.type === 'fixed' ? '<span class="text-slate-600">Sabit</span>' : '<span class="text-sky-600">Değişken</span>'}</td>
+          <td class="px-3 py-2 num font-semibold">${fmtTL(e.amount || 0)}</td>
+          <td class="px-3 py-2 text-xs text-slate-500 max-w-[160px] truncate" title="${escapeHtml(e.note||'')}">${escapeHtml(e.note||'') || '—'}</td>
+          <td class="px-3 py-2"><button onclick="deleteExpense('${e.id}')" class="text-red-400 hover:text-red-700 text-xs">Sil</button></td>
+        </tr>`;
+      }).join('')
+    : '<tr><td colspan="7" class="px-3 py-8 text-center text-slate-400">Henüz gider kaydı yok. Soldaki formdan başlayabilirsin.</td></tr>';
+}
+
+function saveExpense() {
+  const amount = parseFloat(document.getElementById('e_amount').value) || 0;
+  if (!amount) { alert('Tutar girmelisin!'); return; }
+  state.expenses.push({
+    id: 'exp_' + Date.now() + '_' + Math.random().toString(36).slice(2, 6),
+    company: document.getElementById('e_company').value,
+    category: document.getElementById('e_category').value,
+    type: document.getElementById('e_type').value,
+    month: parseInt(document.getElementById('e_month').value),
+    year: parseInt(document.getElementById('e_year').value),
+    amount,
+    note: document.getElementById('e_note').value.trim(),
+  });
+  persist();
+  document.getElementById('e_amount').value = '';
+  document.getElementById('e_note').value = '';
+  renderExpensesTab();
+}
+
+function deleteExpense(id) {
+  if (!confirm('Bu gider kaydı silinecek. Emin misin?')) return;
+  state.expenses = state.expenses.filter(e => e.id !== id);
+  persist();
+  renderExpensesTab();
+}
+
+function renderGrossProfitBridge() {
+  const y0Sel = document.getElementById('bridgeY0');
+  const y1Sel = document.getElementById('bridgeY1');
+  if (!y0Sel || typeof Chart === 'undefined') return;
+
+  const years = [...new Set((state.sales || []).map(s => s.year))].sort();
+  if (!y0Sel.options.length) {
+    const cur = new Date().getFullYear();
+    const list = years.length ? years : [cur - 1, cur];
+    const opts = list.map(y => `<option value="${y}">${y}</option>`).join('');
+    y0Sel.innerHTML = opts; y1Sel.innerHTML = opts;
+    y0Sel.value = list.includes(cur - 1) ? cur - 1 : list[0];
+    y1Sel.value = list.includes(cur) ? cur : list[list.length - 1];
+    y0Sel.onchange = renderGrossProfitBridge;
+    y1Sel.onchange = renderGrossProfitBridge;
+  }
+  const y0 = parseInt(y0Sel.value), y1 = parseInt(y1Sel.value);
+
+  const costMap = {};
+  state.products.forEach(p => { costMap[p.id] = calculate(p).total_cost; });
+  const agg = (y) => {
+    const m = {};
+    (state.sales || []).forEach(s => {
+      if (s.year !== y || s.no_stock) return;
+      const a = (m[s.productId] = m[s.productId] || { q: 0, rev: 0 });
+      a.q += (s.qty || 0); a.rev += (s.revenue || 0);
+    });
+    return m;
+  };
+  const A = agg(y0), B = agg(y1);
+  const gpOf = (m) => Object.entries(m).reduce((s, [pid, a]) => s + a.rev - a.q * (costMap[pid] || 0), 0);
+  const gp0 = gpOf(A), gp1 = gpOf(B);
+
+  const empty = document.getElementById('bridgeEmpty');
+  const hasBoth = Object.keys(A).length && Object.keys(B).length;
+  if (empty) empty.classList.toggle('hidden', !!hasBoth);
+  if (!hasBoth) { destroyChart('bridge'); return; }
+
+  let volume = 0, price = 0, newP = 0, dropped = 0;
+  Object.keys(B).forEach(pid => {
+    const b = B[pid], c = costMap[pid] || 0;
+    if (A[pid]) {
+      const a = A[pid];
+      const p0 = a.q > 0 ? a.rev / a.q : 0;
+      const p1 = b.q > 0 ? b.rev / b.q : 0;
+      volume += (b.q - a.q) * (p0 - c);
+      price  += b.q * (p1 - p0);
+    } else newP += b.rev - b.q * c;
+  });
+  Object.keys(A).forEach(pid => { if (!B[pid]) dropped -= A[pid].rev - A[pid].q * (costMap[pid] || 0); });
+
+  const steps = [
+    { label: y0 + ' GP', delta: gp0, total: true },
+    { label: 'Hacim', delta: volume },
+    { label: 'Fiyat', delta: price },
+    { label: 'Yeni Ürünler', delta: newP },
+    { label: 'Çıkan Ürünler', delta: dropped },
+    { label: y1 + ' GP', delta: gp1, total: true },
+  ];
+  let run = 0;
+  const bars = steps.map(st => {
+    if (st.total) { run = st.delta; return [0, st.delta]; }
+    const b = [run, run + st.delta]; run += st.delta; return b;
+  });
+  destroyChart('bridge');
+  charts.bridge = new Chart(document.getElementById('chartBridge'), {
+    type: 'bar',
+    data: {
+      labels: steps.map(s => s.label),
+      datasets: [{
+        data: bars,
+        backgroundColor: steps.map(s => s.total ? 'rgba(30,41,59,.85)' : (s.delta >= 0 ? 'rgba(5,150,105,.8)' : 'rgba(220,38,38,.8)')),
+        borderRadius: 4, borderSkipped: false,
+      }],
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: (ctx) => {
+          const st = steps[ctx.dataIndex];
+          return (st.total ? 'Toplam: ' : 'Etki: ') + (!st.total && st.delta >= 0 ? '+' : '') + fmtTL(st.delta);
+        } } },
+      },
+      scales: {
+        y: { ticks: { callback: (v) => new Intl.NumberFormat('tr-TR',{notation:'compact'}).format(v)+' ₺', font: { size: 10 } } },
+        x: { ticks: { font: { size: 10 } } },
+      },
+    },
+  });
+}
+
 function init() {
   // Veri artık onLoginSuccess içinde Supabase'den yükleniyor
   // Burada sadece event listener'ları bağlıyoruz
@@ -3973,6 +4337,9 @@ function init() {
       document.getElementById('tab-' + btn.dataset.tab).classList.remove('hidden');
       state.currentTab = btn.dataset.tab;
       // Re-render analytics when switching to it so charts size correctly
+      if (btn.dataset.tab === 'expenses') {
+        setTimeout(() => renderExpensesTab(), 50);
+      }
       if (btn.dataset.tab === 'home') {
         renderHome();
       }
@@ -5079,7 +5446,7 @@ function renderSalesTable() {
     const noStockBadge = s.no_stock ? '<span class="inline-block bg-amber-100 text-amber-700 text-[10px] px-1.5 py-0.5 rounded ml-1">stok yok</span>' : '';
     const noteText = s.note ? escapeHtml(s.note) : '';
     const noteCell = noteText
-      ? `<span class="text-slate-500 block max-w-[160px] truncate" title="${noteText}">📝 ${noteText}</span>`
+      ? `<span class="note-tip text-slate-500 block max-w-[160px]"><span class="block truncate">📝 ${noteText}</span><span class="note-pop">${noteText}</span></span>`
       : '<span class="text-slate-300">—</span>';
     const c = getCompanyById(saleCompany(s));
     return `<tr class="border-t border-slate-100 hover:bg-slate-50 ${s.no_stock ? 'opacity-60' : ''}">
@@ -5092,7 +5459,7 @@ function renderSalesTable() {
       <td class="px-3 py-2 num text-slate-500">${fmtTL2(totalCost)}</td>
       <td class="px-3 py-2 num font-semibold ${marginColor}">${s.no_stock ? '—' : margin.toFixed(1)+'%'}</td>
       <td class="px-3 py-2 text-xs">${noteCell}</td>
-      <td class="px-3 py-2"><button onclick="deleteSalesEntry('${s.id}')" class="text-red-400 hover:text-red-700 text-xs">Sil</button></td>
+      <td class="px-3 py-2 whitespace-nowrap"><button onclick="editSalesEntry('${s.id}')" class="text-sky-500 hover:text-sky-700 text-xs mr-2">Düzenle</button><button onclick="deleteSalesEntry('${s.id}')" class="text-red-400 hover:text-red-700 text-xs">Sil</button></td>
     </tr>`;
   };
 
@@ -5137,9 +5504,24 @@ function saveSalesEntry() {
   if (!pid) { alert('Ürün seçmelisin!'); return; }
   if (!noStock && !qty) { alert('Satış adedi girilmeli ya da "stok yok" seçilmeli!'); return; }
 
+  // Düzenleme modundaysa: eski kaydı çıkar, stokunu iade et, kimliğini koru
+  let keepId = null;
+  if (state.editingSaleId) {
+    const oldIdx = state.sales.findIndex(s => s.id === state.editingSaleId);
+    if (oldIdx >= 0) {
+      const old = state.sales[oldIdx];
+      const oldP = state.products.find(x => x.id === old.productId);
+      if (oldP && !old.no_stock) { oldP.stock_qty = (oldP.stock_qty||0) + (old.qty||0); }
+      keepId = old.id;
+      state.sales.splice(oldIdx, 1);
+    }
+    state.editingSaleId = null;
+    setSaleEditUI(false);
+  }
+
   // Aynı firma + ürün + ay + yıl varsa üzerine yaz (farklı firmalar aynı ürünü aynı ayda satabilir)
   const existing = state.sales.findIndex(s => s.productId === pid && s.month === month && s.year === year && saleCompany(s) === company);
-  const entry = { id: 'sale_'+Date.now(), productId: pid, company, month, year, qty, revenue, no_stock: noStock, note };
+  const entry = { id: keepId || ('sale_'+Date.now()), productId: pid, company, month, year, qty, revenue, no_stock: noStock, note };
 
   if (existing >= 0) {
     const old = state.sales[existing];
@@ -5161,6 +5543,55 @@ function saveSalesEntry() {
   document.getElementById('s_revenue_row')?.classList.remove('opacity-40');
   applySalesFilters();
   renderProducts();
+}
+
+function setSaleEditUI(editing) {
+  const banner = document.getElementById('saleEditBanner');
+  const btn = document.getElementById('saveSaleBtn');
+  if (banner) banner.classList.toggle('hidden', !editing);
+  if (btn) {
+    btn.textContent = editing ? '✏️ Güncelle' : 'Kaydet';
+    btn.classList.toggle('bg-amber-600', editing);
+    btn.classList.toggle('hover:bg-amber-500', editing);
+    btn.classList.toggle('bg-slate-900', !editing);
+    btn.classList.toggle('hover:bg-slate-700', !editing);
+  }
+}
+
+function cancelSaleEdit() {
+  state.editingSaleId = null;
+  setSaleEditUI(false);
+  document.getElementById('s_qty').value = '';
+  document.getElementById('s_revenue').value = '';
+  if (document.getElementById('s_note')) document.getElementById('s_note').value = '';
+  if (document.getElementById('s_no_stock')) document.getElementById('s_no_stock').checked = false;
+}
+
+function editSalesEntry(saleId) {
+  const s = state.sales.find(x => x.id === saleId);
+  if (!s) return;
+  state.editingSaleId = saleId;
+  const p = state.products.find(x => x.id === s.productId);
+
+  const cSel = document.getElementById('s_company');
+  if (cSel) cSel.value = saleCompany(s);
+  const gSel = document.getElementById('s_entry_group');
+  if (gSel) gSel.value = p ? p.group : '';
+  populateSalesProductSelects(); // kategoriye göre ürün listesini tazele
+  const pSel = document.getElementById('s_product');
+  if (pSel) pSel.value = s.productId;
+
+  document.getElementById('s_month').value = s.month;
+  document.getElementById('s_year').value = s.year;
+  const ns = document.getElementById('s_no_stock');
+  if (ns) { ns.checked = !!s.no_stock; ns.dispatchEvent(new Event('change')); }
+  document.getElementById('s_qty').value = s.no_stock ? '' : (s.qty || '');
+  document.getElementById('s_revenue').value = s.no_stock ? '' : (s.revenue || '');
+  if (document.getElementById('s_note')) document.getElementById('s_note').value = s.note || '';
+  if (typeof updateSalesCostInfo === 'function') updateSalesCostInfo();
+
+  setSaleEditUI(true);
+  cSel?.scrollIntoView({ behavior: 'smooth', block: 'center' });
 }
 
 function deleteSalesEntry(saleId) {
