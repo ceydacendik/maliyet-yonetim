@@ -3363,14 +3363,14 @@ async function fetchRates() {
 
   // Frankfurter API - CORS sorunu yok, direkt çalışır
   try {
-    const res = await fetch('https://api.frankfurter.app/latest?base=USD&symbols=TRY,EUR');
+    const res = await fetch('https://open.er-api.com/v6/latest/USD');
     if (res.ok) {
       const d = await res.json();
       if (d.rates && d.rates.TRY && d.rates.EUR) {
         state.settings.current_usd = d.rates.TRY;
         state.settings.current_eur = d.rates.TRY / d.rates.EUR;
         state.settings.rates_date = d.date;
-        state.settings.rates_source_used = 'Frankfurter (ECB)';
+        state.settings.rates_source_used = 'ExchangeRate-API';
         persist(); renderAll();
         ok = true;
       }
